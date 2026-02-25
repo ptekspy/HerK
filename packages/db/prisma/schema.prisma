@@ -86,8 +86,66 @@ model User {
   memberships  OrganizationMember[]
   notifications Notification[]
   waivers      Waiver[]
+  sessions     AuthSession[]
+  githubAppInstallStates GithubAppInstallState[]
 
   @@index([email])
+}
+
+model AuthSession {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique
+  provider     String   @default("GITHUB")
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  lastSeenAt   DateTime?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model OAuthState {
+  id         String   @id @default(cuid())
+  provider   String   @default("GITHUB")
+  state      String   @unique
+  returnTo   String?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([consumedAt])
+}
+
+model GithubAppInstallState {
+  id             String       @id @default(cuid())
+  state          String       @unique
+  orgId          String
+  userId         String
+  returnTo       String?
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  installationId BigInt?
+  setupAction    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([consumedAt])
 }
 
 model Organization {
@@ -108,6 +166,7 @@ model Organization {
   notifications Notification[]
   emails        EmailDelivery[]
   subscription  Subscription?
+  githubAppInstallStates GithubAppInstallState[]
 }
 
 model OrganizationMember {

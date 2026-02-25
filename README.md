@@ -8,7 +8,7 @@ ContractGuard prevents breaking API changes from reaching production by diffing 
 - `apps/contract-guard/api`: NestJS HTTP API + webhook ingress
 - `apps/contract-guard/worker`: NestJS BullMQ worker for contract analysis
 - `packages/api`: shared domain contracts/types
-- `packages/db`: Prisma schema + generated client
+- `packages/db`: ContractGuard-scoped Prisma package (`@herk/db-contract-guard`)
 
 ## Requirements
 
@@ -28,7 +28,7 @@ pnpm install
 2. Generate Prisma client:
 
 ```bash
-pnpm --filter @herk/db prisma:generate
+pnpm --filter @herk/db-contract-guard prisma:generate
 ```
 
 3. Create env files:
@@ -46,7 +46,7 @@ docker compose up -d postgres redis
 5. Apply Prisma migrations:
 
 ```bash
-pnpm --filter @herk/db prisma:migrate:dev
+pnpm --filter @herk/db-contract-guard prisma:migrate:dev
 ```
 
 6. Run apps:
@@ -56,6 +56,18 @@ pnpm --filter api dev
 pnpm --filter worker dev
 pnpm --filter web dev
 ```
+
+## Authentication Modes
+
+- Production/default mode: GitHub OAuth (`/auth/github/start` -> `/auth/github/callback`) with an HTTP-only session cookie.
+- GitHub App install flow: `/auth/github/app/install/start?orgId=...` -> GitHub -> `/auth/github/app/install/callback`.
+- Local demo mode: set `ALLOW_HEADER_AUTH=true` in API env and `NEXT_PUBLIC_DEMO_USER_EMAIL` + `NEXT_PUBLIC_DEMO_USER_NAME` in web env.
+
+## DB Schema Isolation
+
+Use a schema-scoped Postgres URL for each app package. ContractGuard defaults to:
+
+- `postgresql://.../contractguard?schema=contract_guard`
 
 ## Full Docker Compose
 
@@ -74,7 +86,7 @@ docker compose up --build
 
 ```bash
 pnpm --filter @herk/api build
-pnpm --filter @herk/db build
+pnpm --filter @herk/db-contract-guard build
 pnpm --filter api build
 pnpm --filter worker build
 pnpm --filter web build

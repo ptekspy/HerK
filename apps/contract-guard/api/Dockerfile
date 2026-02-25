@@ -8,8 +8,8 @@ COPY packages ./packages
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @herk/api build
-RUN pnpm --filter @herk/db prisma:generate
-RUN pnpm --filter @herk/db build
+RUN pnpm --filter @herk/db-contract-guard prisma:generate
+RUN pnpm --filter @herk/db-contract-guard build
 RUN pnpm --filter api build
 
 FROM node:22-alpine AS runner

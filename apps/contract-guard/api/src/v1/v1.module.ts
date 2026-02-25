@@ -4,6 +4,7 @@ import { SessionGuard } from '../common/auth/session.guard';
 
 import { BillingController } from './billing.controller';
 import { ChecksController } from './checks.controller';
+import { GithubInstallationsController } from './github-installations.controller';
 import { MembersController } from './members.controller';
 import { MeController } from './me.controller';
 import { NotificationsController } from './notifications.controller';
@@ -22,6 +23,7 @@ import { WaiversController } from './waivers.controller';
     ServicesController,
     PoliciesController,
     ChecksController,
+    GithubInstallationsController,
     WaiversController,
     NotificationsController,
     MembersController,

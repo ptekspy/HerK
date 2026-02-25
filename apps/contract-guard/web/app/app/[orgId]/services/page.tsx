@@ -1,7 +1,7 @@
 import { SectionHeader } from '../../../components/section-header';
-import { SimpleCreateForm } from '../../../components/simple-form';
+import { CreateServiceForm } from '../../../components/create-service-form';
 
-import { apiGet } from '../../../../lib/api';
+import { apiGet } from '../../../../lib/api-server';
 
 interface Service {
   id: string;
@@ -11,9 +11,15 @@ interface Service {
   repository: { fullName: string };
 }
 
+interface RepositoryOption {
+  id: string;
+  fullName: string;
+}
+
 export default async function ServicesPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
   const services = await apiGet<Service[]>(`/v1/orgs/${orgId}/services`).catch(() => []);
+  const repositories = await apiGet<RepositoryOption[]>(`/v1/orgs/${orgId}/repos`).catch(() => []);
 
   return (
     <>
@@ -46,26 +52,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ orgId
 
         <article className="card card-grid-6">
           <h3>Add service</h3>
-          <SimpleCreateForm
-            endpoint={`/v1/orgs/${orgId}/services`}
-            title="service"
-            fields={[
-              { name: 'repositoryId', label: 'Repository ID', placeholder: 'repo-id' },
-              { name: 'name', label: 'Name', placeholder: 'Public API' },
-              { name: 'slug', label: 'Slug', placeholder: 'public-api' },
-              {
-                name: 'contractSourceType',
-                label: 'Source type (GITHUB_FILE or PUBLIC_URL)',
-                placeholder: 'GITHUB_FILE',
-              },
-              { name: 'contractPath', label: 'Contract path', placeholder: 'openapi.yaml' },
-              {
-                name: 'contractUrlTemplate',
-                label: 'Contract URL template',
-                placeholder: 'https://example.com/openapi?sha={sha}',
-              },
-            ]}
-          />
+          <CreateServiceForm orgId={orgId} repositories={repositories} />
         </article>
       </section>
     </>

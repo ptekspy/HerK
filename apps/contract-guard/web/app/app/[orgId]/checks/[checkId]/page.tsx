@@ -1,6 +1,6 @@
 import { SectionHeader } from '../../../../components/section-header';
 
-import { apiGet } from '../../../../../lib/api';
+import { apiGet } from '../../../../../lib/api-server';
 
 interface Issue {
   id: string;

@@ -7,28 +7,38 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Prisma } from '@herk/db';
+import { Prisma } from '@herk/db-contract-guard';
 import { PrAnalysisJobPayload } from '@herk/api';
 import Stripe from 'stripe';
 
 import { PrismaService } from '../common/prisma/prisma.service';
 import { QueuesService } from '../queues/queues.service';
 
-interface GithubPullRequestEvent {
+interface GithubRepositoryPayload {
+  owner?: { login?: string };
+  name?: string;
+  full_name?: string;
+  default_branch?: string;
+}
+
+interface GithubWebhookPayload {
   action: string;
   pull_request?: {
     number: number;
     head: { sha: string };
     base: { sha: string };
   };
-  repository?: {
-    owner?: { login: string };
-    name?: string;
-    full_name?: string;
-    default_branch?: string;
-  };
+  repository?: GithubRepositoryPayload;
+  repositories_added?: GithubRepositoryPayload[];
+  repositories_removed?: GithubRepositoryPayload[];
   installation?: {
     id: number;
+    account?: {
+      login?: string;
+    };
+  };
+  account?: {
+    login?: string;
   };
 }
 
@@ -92,10 +102,150 @@ export class WebhooksService {
     }
   }
 
+  private async markGithubWebhookProcessed(recordId: string) {
+    await this.prisma.webhookEvent.update({
+      where: { id: recordId },
+      data: {
+        status: 'PROCESSED',
+        processedAt: new Date(),
+      },
+    });
+  }
+
+  private async handleGithubInstallationEvent(
+    recordId: string,
+    payload: GithubWebhookPayload,
+  ) {
+    if (!payload.installation?.id) {
+      throw new BadRequestException('Missing installation payload details.');
+    }
+
+    const installationId = BigInt(payload.installation.id);
+    const accountLogin = payload.installation.account?.login ?? payload.account?.login ?? '';
+
+    if (payload.action === 'deleted') {
+      await this.prisma.githubInstallation.deleteMany({
+        where: {
+          installationId,
+        },
+      });
+
+      await this.markGithubWebhookProcessed(recordId);
+      return { ok: true, deletedInstallationId: payload.installation.id };
+    }
+
+    const org = accountLogin
+      ? await this.prisma.organization.findFirst({
+          where: {
+            slug: accountLogin.toLowerCase(),
+          },
+        })
+      : null;
+
+    if (!org) {
+      await this.markGithubWebhookProcessed(recordId);
+      return { ok: true, ignored: true, reason: 'organization not mapped yet' };
+    }
+
+    const installation = await this.prisma.githubInstallation.upsert({
+      where: {
+        installationId,
+      },
+      create: {
+        orgId: org.id,
+        installationId,
+        accountLogin: accountLogin.toLowerCase(),
+      },
+      update: {
+        orgId: org.id,
+        accountLogin: accountLogin.toLowerCase(),
+      },
+    });
+
+    await this.markGithubWebhookProcessed(recordId);
+    return { ok: true, installation };
+  }
+
+  private async handleGithubInstallationRepositoriesEvent(
+    recordId: string,
+    payload: GithubWebhookPayload,
+  ) {
+    if (!payload.installation?.id) {
+      throw new BadRequestException('Missing installation payload details.');
+    }
+
+    const installationId = BigInt(payload.installation.id);
+    const installation = await this.prisma.githubInstallation.findUnique({
+      where: {
+        installationId,
+      },
+    });
+
+    if (!installation) {
+      await this.markGithubWebhookProcessed(recordId);
+      return { ok: true, ignored: true, reason: 'installation not mapped' };
+    }
+
+    let added = 0;
+    let removed = 0;
+
+    for (const repository of payload.repositories_added ?? []) {
+      const fullName = repository.full_name;
+      const name = repository.name;
+      const owner = repository.owner?.login;
+
+      if (!fullName || !name || !owner) {
+        continue;
+      }
+
+      await this.prisma.repository.upsert({
+        where: {
+          fullName,
+        },
+        create: {
+          orgId: installation.orgId,
+          githubInstallationId: installation.id,
+          owner,
+          name,
+          fullName,
+          defaultBranch: repository.default_branch ?? 'main',
+        },
+        update: {
+          orgId: installation.orgId,
+          githubInstallationId: installation.id,
+          owner,
+          name,
+          defaultBranch: repository.default_branch ?? 'main',
+        },
+      });
+      added += 1;
+    }
+
+    const removedFullNames = (payload.repositories_removed ?? [])
+      .map((repository) => repository.full_name)
+      .filter((value): value is string => Boolean(value));
+
+    if (removedFullNames.length > 0) {
+      const deleted = await this.prisma.repository.deleteMany({
+        where: {
+          orgId: installation.orgId,
+          githubInstallationId: installation.id,
+          fullName: {
+            in: removedFullNames,
+          },
+        },
+      });
+      removed = deleted.count;
+    }
+
+    await this.markGithubWebhookProcessed(recordId);
+    return { ok: true, added, removed };
+  }
+
   async handleGithubWebhook(
     eventName: string,
     deliveryId: string,
-    payload: GithubPullRequestEvent,
+    payload: GithubWebhookPayload,
   ) {
     const record = await this.saveWebhookEvent('GITHUB', deliveryId, eventName, payload);
 
@@ -103,15 +253,16 @@ export class WebhooksService {
       return { ok: true, duplicate: true };
     }
 
-    if (eventName !== 'pull_request') {
-      await this.prisma.webhookEvent.update({
-        where: { id: record.id },
-        data: {
-          status: 'PROCESSED',
-          processedAt: new Date(),
-        },
-      });
+    if (eventName === 'installation') {
+      return this.handleGithubInstallationEvent(record.id, payload);
+    }
 
+    if (eventName === 'installation_repositories') {
+      return this.handleGithubInstallationRepositoriesEvent(record.id, payload);
+    }
+
+    if (eventName !== 'pull_request') {
+      await this.markGithubWebhookProcessed(record.id);
       return { ok: true, ignored: true };
     }
 
@@ -120,14 +271,7 @@ export class WebhooksService {
     }
 
     if (!['opened', 'synchronize', 'reopened'].includes(payload.action)) {
-      await this.prisma.webhookEvent.update({
-        where: { id: record.id },
-        data: {
-          status: 'PROCESSED',
-          processedAt: new Date(),
-        },
-      });
-
+      await this.markGithubWebhookProcessed(record.id);
       return { ok: true, ignored: true };
     }
 
@@ -156,14 +300,7 @@ export class WebhooksService {
     });
 
     if (!repository) {
-      await this.prisma.webhookEvent.update({
-        where: { id: record.id },
-        data: {
-          status: 'PROCESSED',
-          processedAt: new Date(),
-        },
-      });
-
+      await this.markGithubWebhookProcessed(record.id);
       return { ok: true, ignored: true, reason: 'repository not configured' };
     }
 
@@ -197,13 +334,7 @@ export class WebhooksService {
       await this.queues.enqueuePrAnalysis(jobPayload);
     }
 
-    await this.prisma.webhookEvent.update({
-      where: { id: record.id },
-      data: {
-        status: 'PROCESSED',
-        processedAt: new Date(),
-      },
-    });
+    await this.markGithubWebhookProcessed(record.id);
 
     return {
       ok: true,

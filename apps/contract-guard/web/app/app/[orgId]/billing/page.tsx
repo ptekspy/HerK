@@ -1,6 +1,7 @@
 import { SectionHeader } from '../../../components/section-header';
+import { BillingActions } from '../../../components/billing-actions';
 
-import { apiGet } from '../../../../lib/api';
+import { apiGet } from '../../../../lib/api-server';
 
 interface BillingSummary {
   plan: string;
@@ -57,6 +58,7 @@ export default async function BillingPage({ params }: { params: Promise<{ orgId:
             Use API endpoints <code>/v1/orgs/:orgId/billing/checkout-session</code> and{' '}
             <code>/v1/orgs/:orgId/billing/portal-session</code> to launch Stripe flows.
           </p>
+          <BillingActions orgId={orgId} />
         </article>
       </section>
     </>

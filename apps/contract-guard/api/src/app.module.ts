@@ -6,6 +6,7 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { PrismaModule } from './common/prisma/prisma.module';
 import { RbacService } from './common/rbac/rbac.service';
+import { AuthModule } from './auth/auth.module';
 import { QueuesModule } from './queues/queues.module';
 import { V1Module } from './v1/v1.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
@@ -32,6 +33,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
         },
       }),
     }),
+    AuthModule,
     PrismaModule,
     QueuesModule,
     V1Module,

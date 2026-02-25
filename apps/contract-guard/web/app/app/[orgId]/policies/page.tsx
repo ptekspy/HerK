@@ -1,6 +1,7 @@
 import { SectionHeader } from '../../../components/section-header';
+import { PolicyEditor } from '../../../components/policy-editor';
 
-import { apiGet } from '../../../../lib/api';
+import { apiGet } from '../../../../lib/api-server';
 
 interface Policy {
   id: string;
@@ -36,33 +37,12 @@ export default async function PoliciesPage({ params }: { params: Promise<{ orgId
         </article>
 
         <article className="card card-grid-6">
-          <h3>Rule examples</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Rule</th>
-                <th>Default</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>endpoint.removed</td>
-                <td>BLOCK</td>
-              </tr>
-              <tr>
-                <td>schema.required_added</td>
-                <td>BLOCK</td>
-              </tr>
-              <tr>
-                <td>schema.type_changed</td>
-                <td>BLOCK</td>
-              </tr>
-              <tr>
-                <td>schema.enum_narrowed</td>
-                <td>BLOCK</td>
-              </tr>
-            </tbody>
-          </table>
+          <h3>Policy editor</h3>
+          <PolicyEditor
+            orgId={orgId}
+            initialFailOnBreaking={policy.failOnBreaking}
+            initialRuleOverrides={policy.ruleOverrides ?? {}}
+          />
         </article>
       </section>
     </>

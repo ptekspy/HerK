@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@herk/api": "workspace:*",
-    "@herk/db": "workspace:*",
+    "@herk/db-contract-guard": "workspace:*",
     "@nestjs/bullmq": "^11.0.3",
     "@nestjs/common": "^11.1.14",
     "@nestjs/config": "^4.0.2",

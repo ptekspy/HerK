@@ -1,5 +1,5 @@
 :80 {
-  @api path /v1/* /webhooks/*
+  @api path /v1/* /webhooks/* /auth/*
   handle @api {
     reverse_proxy api:4001
   }

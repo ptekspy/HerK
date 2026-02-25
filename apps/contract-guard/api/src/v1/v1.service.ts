@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { BillingPlan } from '@herk/api';
+import { createAppAuth } from '@octokit/auth-app';
+import { Octokit } from '@octokit/rest';
 import Stripe from 'stripe';
 
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -13,10 +16,11 @@ import { CreateOrgDto } from './dto/org.dto';
 import { CreateRepositoryDto, UpdateRepositoryDto } from './dto/repo.dto';
 import { CreateServiceDto, UpdateServiceDto } from './dto/service.dto';
 import { UpdatePolicyDto } from './dto/policy.dto';
-import { CreateWaiverDto } from './dto/waiver.dto';
+import { CreateWaiverDto, UpdateWaiverDto } from './dto/waiver.dto';
 import { MarkNotificationsReadDto } from './dto/notifications.dto';
 import { CreateMemberDto, UpdateMemberDto } from './dto/member.dto';
 import { CreateCheckoutSessionDto } from './dto/billing.dto';
+import { SyncGithubInstallationDto } from './dto/github-installation.dto';
 
 const PLAN_LIMITS: Record<BillingPlan, number | null> = {
   STARTER: 3,
@@ -37,6 +41,31 @@ export class V1Service {
           apiVersion: '2025-08-27.basil',
         })
       : null;
+  }
+
+  private async createGithubInstallationClient(installationId: number) {
+    const appId = process.env.GITHUB_APP_ID;
+    const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+
+    if (!appId || !privateKey) {
+      throw new InternalServerErrorException(
+        'GitHub App credentials are missing. Set GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY.',
+      );
+    }
+
+    const auth = createAppAuth({
+      appId,
+      privateKey: privateKey.replace(/\\n/g, '\n'),
+    });
+
+    const installationAuth = await auth({
+      type: 'installation',
+      installationId,
+    });
+
+    return new Octokit({
+      auth: installationAuth.token,
+    });
   }
 
   async ensureDefaultOrgForUser(userId: string, email: string | null) {
@@ -178,6 +207,123 @@ export class V1Service {
     return organization;
   }
 
+  async listGithubInstallations(userId: string, orgId: string) {
+    await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
+
+    const installations = await this.prisma.githubInstallation.findMany({
+      where: { orgId },
+      include: {
+        _count: {
+          select: {
+            repositories: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return installations.map((installation) => ({
+      ...installation,
+      installationId: installation.installationId.toString(),
+    }));
+  }
+
+  async syncGithubInstallation(
+    userId: string,
+    orgId: string,
+    dto: SyncGithubInstallationDto,
+  ) {
+    await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
+
+    const installation = await this.prisma.githubInstallation.upsert({
+      where: {
+        installationId: BigInt(dto.installationId),
+      },
+      create: {
+        orgId,
+        installationId: BigInt(dto.installationId),
+        accountLogin: dto.accountLogin,
+      },
+      update: {
+        orgId,
+        accountLogin: dto.accountLogin,
+      },
+    });
+
+    if (dto.syncRepositories === false) {
+      return {
+        installation: {
+          ...installation,
+          installationId: installation.installationId.toString(),
+        },
+        syncedRepositories: 0,
+      };
+    }
+
+    const octokit = await this.createGithubInstallationClient(dto.installationId);
+
+    let page = 1;
+    let syncedRepositories = 0;
+
+    for (;;) {
+      const response = await octokit.rest.apps.listReposAccessibleToInstallation({
+        per_page: 100,
+        page,
+      });
+
+      const repositories = response.data.repositories ?? [];
+      if (repositories.length === 0) {
+        break;
+      }
+
+      for (const repository of repositories) {
+        const fullName = repository.full_name;
+        const owner = repository.owner?.login || dto.accountLogin;
+        const name = repository.name;
+        const defaultBranch = repository.default_branch || 'main';
+
+        await this.prisma.repository.upsert({
+          where: {
+            fullName,
+          },
+          create: {
+            orgId,
+            githubInstallationId: installation.id,
+            owner,
+            name,
+            fullName,
+            defaultBranch,
+          },
+          update: {
+            orgId,
+            githubInstallationId: installation.id,
+            owner,
+            name,
+            defaultBranch,
+          },
+        });
+
+        syncedRepositories += 1;
+      }
+
+      if (repositories.length < 100) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return {
+      installation: {
+        ...installation,
+        installationId: installation.installationId.toString(),
+      },
+      syncedRepositories,
+    };
+  }
+
   async listRepos(userId: string, orgId: string) {
     await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
 
@@ -199,7 +345,7 @@ export class V1Service {
   async createRepo(userId: string, orgId: string, dto: CreateRepositoryDto) {
     await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
 
-    let installation = await this.prisma.githubInstallation.findFirst({
+    const installation = await this.prisma.githubInstallation.findFirst({
       where: {
         id: dto.githubInstallationId,
         orgId,
@@ -207,13 +353,7 @@ export class V1Service {
     });
 
     if (!installation) {
-      installation = await this.prisma.githubInstallation.create({
-        data: {
-          orgId,
-          accountLogin: dto.owner,
-          installationId: BigInt(Date.now()),
-        },
-      });
+      throw new NotFoundException('GitHub installation not found for organization.');
     }
 
     return this.prisma.repository.create({
@@ -486,7 +626,7 @@ export class V1Service {
   async listChecks(userId: string, orgId: string) {
     await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
 
-    return this.prisma.checkRun.findMany({
+    const checks = await this.prisma.checkRun.findMany({
       where: { orgId },
       include: {
         service: true,
@@ -502,6 +642,12 @@ export class V1Service {
       },
       take: 100,
     });
+
+    return checks.map((check) => ({
+      ...check,
+      githubCheckRunId: check.githubCheckRunId?.toString() ?? null,
+      githubCommentId: check.githubCommentId?.toString() ?? null,
+    }));
   }
 
   async getCheck(userId: string, orgId: string, checkId: string) {
@@ -523,7 +669,36 @@ export class V1Service {
       throw new NotFoundException('Check run not found.');
     }
 
-    return check;
+    return {
+      ...check,
+      githubCheckRunId: check.githubCheckRunId?.toString() ?? null,
+      githubCommentId: check.githubCommentId?.toString() ?? null,
+    };
+  }
+
+  async listWaivers(userId: string, orgId: string) {
+    await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
+
+    return this.prisma.waiver.findMany({
+      where: {
+        orgId,
+      },
+      include: {
+        service: true,
+        repository: true,
+        createdBy: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 200,
+    });
   }
 
   async createWaiver(userId: string, orgId: string, dto: CreateWaiverDto) {
@@ -538,6 +713,30 @@ export class V1Service {
       throw new BadRequestException('Waiver expiry must be in the future.');
     }
 
+    if (dto.serviceId) {
+      const service = await this.prisma.service.findFirst({
+        where: {
+          id: dto.serviceId,
+          orgId,
+        },
+      });
+      if (!service) {
+        throw new NotFoundException('Service not found for organization.');
+      }
+    }
+
+    if (dto.repositoryId) {
+      const repository = await this.prisma.repository.findFirst({
+        where: {
+          id: dto.repositoryId,
+          orgId,
+        },
+      });
+      if (!repository) {
+        throw new NotFoundException('Repository not found for organization.');
+      }
+    }
+
     return this.prisma.waiver.create({
       data: {
         orgId,
@@ -547,6 +746,80 @@ export class V1Service {
         reason: dto.reason,
         expiresAt,
         createdByUserId: userId,
+      },
+    });
+  }
+
+  async updateWaiver(
+    userId: string,
+    orgId: string,
+    waiverId: string,
+    dto: UpdateWaiverDto,
+  ) {
+    await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
+
+    const waiver = await this.prisma.waiver.findFirst({
+      where: {
+        id: waiverId,
+        orgId,
+      },
+    });
+
+    if (!waiver) {
+      throw new NotFoundException('Waiver not found for organization.');
+    }
+
+    if (dto.serviceId) {
+      const service = await this.prisma.service.findFirst({
+        where: {
+          id: dto.serviceId,
+          orgId,
+        },
+      });
+      if (!service) {
+        throw new NotFoundException('Service not found for organization.');
+      }
+    }
+
+    if (dto.repositoryId) {
+      const repository = await this.prisma.repository.findFirst({
+        where: {
+          id: dto.repositoryId,
+          orgId,
+        },
+      });
+      if (!repository) {
+        throw new NotFoundException('Repository not found for organization.');
+      }
+    }
+
+    let nextExpiresAt: Date | undefined;
+    if (dto.expiresAt !== undefined) {
+      nextExpiresAt = new Date(dto.expiresAt);
+      if (Number.isNaN(nextExpiresAt.getTime())) {
+        throw new BadRequestException('Invalid expiresAt value.');
+      }
+
+      if (nextExpiresAt <= new Date()) {
+        throw new BadRequestException('Waiver expiry must be in the future.');
+      }
+    }
+
+    return this.prisma.waiver.update({
+      where: {
+        id: waiverId,
+      },
+      data: {
+        serviceId: dto.serviceId === undefined ? undefined : dto.serviceId,
+        repositoryId: dto.repositoryId === undefined ? undefined : dto.repositoryId,
+        pullRequestNumber:
+          dto.pullRequestNumber === undefined ? undefined : dto.pullRequestNumber,
+        reason: dto.reason,
+        expiresAt: nextExpiresAt,
+      },
+      include: {
+        service: true,
+        repository: true,
       },
     });
   }

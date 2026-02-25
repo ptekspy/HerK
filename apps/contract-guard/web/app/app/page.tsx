@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { apiGet } from '../../lib/api';
+import { apiGet } from '../../lib/api-server';
 
 interface OrgMembership {
   id: string;

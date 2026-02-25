@@ -1,7 +1,7 @@
 import { SectionHeader } from '../../../components/section-header';
 import { SimpleCreateForm } from '../../../components/simple-form';
 
-import { apiGet } from '../../../../lib/api';
+import { apiGet } from '../../../../lib/api-server';
 
 interface Member {
   id: string;

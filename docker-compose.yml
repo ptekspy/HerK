@@ -45,7 +45,7 @@ services:
       - .env.compose
     environment:
       PORT: 4001
-      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard
+      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard?schema=contract_guard
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
@@ -63,7 +63,7 @@ services:
     env_file:
       - .env.compose
     environment:
-      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard
+      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard?schema=contract_guard
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
