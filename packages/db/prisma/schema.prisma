@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum BillingPlan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum ContractSourceType {
+  GITHUB_FILE
+  PUBLIC_URL
+}
+
+enum CheckRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum CheckConclusion {
+  PASS
+  WARN
+  FAIL
+  ERROR
+}
+
+enum DiffIssueSeverity {
+  INFO
+  WARN
+  BREAKING
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum EmailProvider {
+  RESEND
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum WebhookProvider {
+  GITHUB
+  STRIPE
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+model User {
+  id           String                @id @default(cuid())
+  githubUserId BigInt?               @unique
+  email        String?               @unique
+  name         String?
+  avatarUrl    String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  memberships  OrganizationMember[]
+  notifications Notification[]
+  waivers      Waiver[]
+
+  @@index([email])
+}
+
+model Organization {
+  id            String               @id @default(cuid())
+  name          String
+  slug          String               @unique
+  billingPlan   BillingPlan          @default(STARTER)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  members       OrganizationMember[]
+  installations GithubInstallation[]
+  repositories  Repository[]
+  services      Service[]
+  policies      Policy[]
+  waivers       Waiver[]
+  checkRuns     CheckRun[]
+  notifications Notification[]
+  emails        EmailDelivery[]
+  subscription  Subscription?
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  orgId          String
+  userId         String
+  role           MemberRole
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model GithubInstallation {
+  id                   String      @id @default(cuid())
+  orgId                String
+  installationId       BigInt      @unique
+  accountLogin         String
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  organization         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  repositories         Repository[]
+
+  @@index([orgId])
+}
+
+model Repository {
+  id                   String      @id @default(cuid())
+  orgId                String
+  githubInstallationId String
+  owner                String
+  name                 String
+  fullName             String      @unique
+  defaultBranch        String      @default("main")
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  organization         Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  installation         GithubInstallation @relation(fields: [githubInstallationId], references: [id], onDelete: Cascade)
+  services             Service[]
+  checkRuns            CheckRun[]
+  waivers              Waiver[]
+
+  @@index([orgId])
+  @@index([githubInstallationId])
+  @@unique([orgId, owner, name])
+}
+
+model Service {
+  id                 String             @id @default(cuid())
+  orgId              String
+  repositoryId       String
+  name               String
+  slug               String
+  contractSourceType ContractSourceType
+  contractPath       String?
+  contractUrlTemplate String?
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  organization       Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  repository         Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  policy             Policy?
+  checkRuns          CheckRun[]
+  waivers            Waiver[]
+
+  @@index([orgId])
+  @@index([repositoryId])
+  @@unique([orgId, slug])
+}
+
+model Policy {
+  id               String      @id @default(cuid())
+  orgId            String
+  serviceId        String?     @unique
+  failOnBreaking   Boolean     @default(true)
+  ruleOverrides    Json        @default("{}")
+  updatedByUserId  String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  organization     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  service          Service?     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model Waiver {
+  id               String      @id @default(cuid())
+  orgId            String
+  serviceId        String?
+  repositoryId     String?
+  pullRequestNumber Int?
+  reason           String
+  expiresAt        DateTime
+  createdByUserId  String
+  createdAt        DateTime    @default(now())
+
+  organization     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  service          Service?     @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  repository       Repository?  @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  createdBy        User         @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([orgId])
+  @@index([serviceId])
+  @@index([repositoryId])
+  @@index([pullRequestNumber])
+}
+
+model CheckRun {
+  id                String         @id @default(cuid())
+  orgId             String
+  repositoryId      String
+  serviceId         String
+  pullRequestNumber Int
+  pullRequestHeadSha String
+  status            CheckRunStatus @default(PENDING)
+  conclusion        CheckConclusion?
+  summary           String?
+  githubCheckRunId  BigInt?
+  githubCommentId   BigInt?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  organization      Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  repository        Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  service           Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  issues            DiffIssue[]
+
+  @@index([orgId])
+  @@index([repositoryId])
+  @@index([serviceId])
+  @@index([pullRequestNumber])
+}
+
+model DiffIssue {
+  id          String            @id @default(cuid())
+  checkRunId  String
+  ruleCode    String
+  title       String
+  path        String?
+  beforeValue String?
+  afterValue  String?
+  severity    DiffIssueSeverity
+  isBreaking  Boolean           @default(false)
+  isWaived    Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+
+  checkRun    CheckRun          @relation(fields: [checkRunId], references: [id], onDelete: Cascade)
+
+  @@index([checkRunId])
+  @@index([ruleCode])
+}
+
+model Notification {
+  id          String      @id @default(cuid())
+  orgId       String
+  userId      String?
+  kind        String
+  title       String
+  body        String
+  link        String?
+  readAt      DateTime?
+  createdAt   DateTime    @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  emails       EmailDelivery[]
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([readAt])
+}
+
+model EmailDelivery {
+  id               String              @id @default(cuid())
+  orgId            String
+  notificationId   String
+  provider         EmailProvider       @default(RESEND)
+  providerMessageId String?
+  recipientEmail   String
+  subject          String
+  status           EmailDeliveryStatus @default(PENDING)
+  errorMessage     String?
+  createdAt        DateTime            @default(now())
+  sentAt           DateTime?
+
+  organization     Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  notification     Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([notificationId])
+  @@index([status])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  orgId                String             @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  organization         Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  events               SubscriptionEvent[]
+}
+
+model SubscriptionEvent {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  stripeEventId  String       @unique
+  eventType      String
+  payload        Json
+  createdAt      DateTime     @default(now())
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+}
+
+model WebhookEvent {
+  id           String           @id @default(cuid())
+  provider     WebhookProvider
+  deliveryId   String?
+  eventType    String
+  payload      Json
+  status       WebhookEventStatus @default(RECEIVED)
+  errorMessage String?
+  createdAt    DateTime         @default(now())
+  processedAt  DateTime?
+
+  @@unique([provider, deliveryId])
+  @@index([provider])
+  @@index([eventType])
+}

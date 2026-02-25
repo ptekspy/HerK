@@ -1,135 +1,82 @@
-# Turborepo starter
+# ContractGuard Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+ContractGuard prevents breaking API changes from reaching production by diffing OpenAPI contracts on pull requests and enforcing policy-driven outcomes.
 
-## Using this example
+## Workspace Layout
 
-Run the following command:
+- `apps/contract-guard/web`: Next.js product UI (dashboard + onboarding + settings)
+- `apps/contract-guard/api`: NestJS HTTP API + webhook ingress
+- `apps/contract-guard/worker`: NestJS BullMQ worker for contract analysis
+- `packages/api`: shared domain contracts/types
+- `packages/db`: Prisma schema + generated client
 
-```sh
-npx create-turbo@latest
+## Requirements
+
+- Node.js 22+
+- pnpm 9+
+- Postgres 16+
+- Redis 7+
+
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+pnpm install
 ```
 
-## What's inside?
+2. Generate Prisma client:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@herk/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@herk/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@herk/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+pnpm --filter @herk/db prisma:generate
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+3. Create env files:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+- `cp apps/contract-guard/api/.env.example apps/contract-guard/api/.env`
+- `cp apps/contract-guard/worker/.env.example apps/contract-guard/worker/.env`
+- `cp apps/contract-guard/web/.env.example apps/contract-guard/web/.env.local`
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+4. Start infrastructure (Postgres + Redis):
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+docker compose up -d postgres redis
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+5. Apply Prisma migrations:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+pnpm --filter @herk/db prisma:migrate:dev
 ```
 
-### Remote Caching
+6. Run apps:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+pnpm --filter api dev
+pnpm --filter worker dev
+pnpm --filter web dev
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Full Docker Compose
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+A full single-VM runtime (web, api, worker, postgres, redis, caddy) is included:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+cp .env.compose.example .env.compose
+docker compose up --build
 ```
 
-## Useful Links
+- Web/UI: `http://localhost`
+- API: `http://localhost/v1/...`
+- Webhooks: `http://localhost/webhooks/...`
 
-Learn more about the power of Turborepo:
+## Build and Test
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+```bash
+pnpm --filter @herk/api build
+pnpm --filter @herk/db build
+pnpm --filter api build
+pnpm --filter worker build
+pnpm --filter web build
+pnpm --filter api test -- --runInBand
+```

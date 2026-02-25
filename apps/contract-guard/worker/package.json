@@ -1,0 +1,41 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "nest start",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "@herk/api": "workspace:*",
+    "@herk/db": "workspace:*",
+    "@nestjs/bullmq": "^11.0.3",
+    "@nestjs/common": "^11.1.14",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.14",
+    "@octokit/auth-app": "^8.1.1",
+    "@octokit/rest": "^22.0.1",
+    "bullmq": "^5.63.0",
+    "js-yaml": "^4.1.0",
+    "reflect-metadata": "^0.2.2",
+    "resend": "^6.0.3",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@herk/eslint-config": "workspace:*",
+    "@herk/typescript-config": "workspace:*",
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/schematics": "^11.0.9",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.19.3",
+    "eslint": "^9.39.3",
+    "source-map-support": "^0.5.21",
+    "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "5.9.3"
+  }
+}

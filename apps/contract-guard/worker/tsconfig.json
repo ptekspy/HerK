@@ -1,0 +1,8 @@
+{
+  "extends": "@herk/typescript-config/nestjs.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "strictNullChecks": true
+  }
+}
