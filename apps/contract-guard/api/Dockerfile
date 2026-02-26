@@ -21,6 +21,7 @@ COPY --from=builder /app/apps ./apps
 COPY --from=builder /app/packages ./packages
 
 RUN pnpm install --frozen-lockfile --prod=false
+RUN pnpm --filter @herk/db-contract-guard prisma:generate
 RUN chmod +x /app/apps/contract-guard/api/docker-entrypoint.sh
 
 CMD ["/app/apps/contract-guard/api/docker-entrypoint.sh"]

@@ -11,10 +11,6 @@ services:
       - .env.compose
     environment:
       PORT: 4001
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - '127.0.0.1:4001:4001'
     extra_hosts:
@@ -30,11 +26,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env.compose
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     networks:
@@ -52,8 +43,6 @@ services:
       - .env.compose
     environment:
       PORT: 4000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://paddy.systems}
-      NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-https://paddy.systems}
     ports:
       - '127.0.0.1:4000:4000'
     networks:

@@ -21,6 +21,7 @@ COPY --from=builder /app/apps ./apps
 COPY --from=builder /app/packages ./packages
 
 RUN pnpm install --frozen-lockfile --prod=false
+RUN pnpm --filter @herk/db-contract-guard prisma:generate
 
 WORKDIR /app/apps/contract-guard/worker
 CMD ["pnpm", "start:prod"]

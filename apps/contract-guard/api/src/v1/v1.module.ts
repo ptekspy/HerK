@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { SessionGuard } from '../common/auth/session.guard';
+import { RbacService } from '../common/rbac/rbac.service';
 
 import { BillingController } from './billing.controller';
 import { ChecksController } from './checks.controller';
@@ -29,6 +30,6 @@ import { WaiversController } from './waivers.controller';
     MembersController,
     BillingController,
   ],
-  providers: [V1Service, SessionGuard],
+  providers: [V1Service, SessionGuard, RbacService],
 })
 export class V1Module {}
