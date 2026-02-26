@@ -58,7 +58,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ orgId
             orgId={orgId}
             repositories={repositories}
             isSubscriptionActive
-            billingHref={`/app/${orgId}/billing`}
+            billingHref={`/onboarding/plan?orgId=${encodeURIComponent(orgId)}`}
           />
         </article>
       </section>

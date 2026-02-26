@@ -14,6 +14,6 @@ export async function requireActiveSubscription(orgId: string) {
   }));
 
   if (!isSubscriptionActive(billing.status)) {
-    redirect(`/app/${orgId}/billing`);
+    redirect(`/onboarding/plan?orgId=${encodeURIComponent(orgId)}`);
   }
 }
