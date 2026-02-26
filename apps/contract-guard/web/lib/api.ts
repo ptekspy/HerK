@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:4001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.trim();
 
 const demoEmail = process.env.NEXT_PUBLIC_DEMO_USER_EMAIL;
 const demoName = process.env.NEXT_PUBLIC_DEMO_USER_NAME;
@@ -12,8 +11,17 @@ const DEMO_HEADERS: HeadersInit =
       }
     : {};
 
+function buildApiUrl(path: string): string {
+  if (typeof window !== 'undefined') {
+    return path;
+  }
+
+  const base = API_BASE_URL || 'http://localhost:4001';
+  return `${base}${path}`;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     headers: DEMO_HEADERS,
     cache: 'no-store',
     credentials: 'include',
@@ -27,7 +35,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method: 'POST',
     headers: {
       ...DEMO_HEADERS,
@@ -45,7 +53,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method: 'PATCH',
     headers: {
       ...DEMO_HEADERS,
@@ -63,7 +71,7 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method: 'PUT',
     headers: {
       ...DEMO_HEADERS,
@@ -81,7 +89,7 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     method: 'DELETE',
     headers: DEMO_HEADERS,
     credentials: 'include',

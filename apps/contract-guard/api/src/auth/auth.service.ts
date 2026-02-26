@@ -34,7 +34,19 @@ export class AuthService {
   }
 
   shouldUseSecureCookies() {
-    return process.env.NODE_ENV === 'production';
+    const override = process.env.SESSION_COOKIE_SECURE?.trim().toLowerCase();
+    if (override === 'true') {
+      return true;
+    }
+    if (override === 'false') {
+      return false;
+    }
+
+    try {
+      return new URL(this.getFrontendFallbackUrl()).protocol === 'https:';
+    } catch {
+      return process.env.NODE_ENV === 'production';
+    }
   }
 
   getFrontendFallbackUrl() {

@@ -58,6 +58,34 @@ export class WebhooksService {
       : null;
   }
 
+  private resolvePlanFromRequestedPlan(value: string | null | undefined) {
+    if (value === 'STARTER' || value === 'GROWTH' || value === 'ENTERPRISE') {
+      return value;
+    }
+    return null;
+  }
+
+  private resolvePlanFromStripePriceId(priceId: string | null | undefined) {
+    if (!priceId) {
+      return null;
+    }
+
+    if (process.env.STRIPE_PRICE_ID_STARTER && priceId === process.env.STRIPE_PRICE_ID_STARTER) {
+      return 'STARTER';
+    }
+    if (process.env.STRIPE_PRICE_ID_GROWTH && priceId === process.env.STRIPE_PRICE_ID_GROWTH) {
+      return 'GROWTH';
+    }
+    if (
+      process.env.STRIPE_PRICE_ID_ENTERPRISE &&
+      priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE
+    ) {
+      return 'ENTERPRISE';
+    }
+
+    return null;
+  }
+
   private toJsonValue(payload: unknown): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(payload)) as Prisma.InputJsonValue;
   }
@@ -373,6 +401,7 @@ export class WebhooksService {
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const orgId = session.metadata?.orgId;
+        const requestedPlan = this.resolvePlanFromRequestedPlan(session.metadata?.requestedPlan);
 
         if (orgId) {
           await this.prisma.subscription.upsert({
@@ -393,6 +422,15 @@ export class WebhooksService {
               status: 'ACTIVE',
             },
           });
+
+          if (requestedPlan) {
+            await this.prisma.organization.update({
+              where: { id: orgId },
+              data: {
+                billingPlan: requestedPlan,
+              },
+            });
+          }
         }
       }
 
@@ -409,6 +447,9 @@ export class WebhooksService {
         });
 
         if (existing) {
+          const currentPriceId = sub.items.data[0]?.price?.id ?? null;
+          const inferredPlan = this.resolvePlanFromStripePriceId(currentPriceId);
+
           await this.prisma.subscription.update({
             where: { id: existing.id },
             data: {
@@ -428,6 +469,15 @@ export class WebhooksService {
               cancelAtPeriodEnd: sub.cancel_at_period_end,
             },
           });
+
+          if (inferredPlan) {
+            await this.prisma.organization.update({
+              where: { id: existing.orgId },
+              data: {
+                billingPlan: inferredPlan,
+              },
+            });
+          }
         }
       }
 

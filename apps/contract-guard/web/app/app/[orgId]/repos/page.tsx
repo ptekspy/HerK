@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-
 import { SectionHeader } from '../../../components/section-header';
 import { CreateRepoForm } from '../../../components/create-repo-form';
 import { RefreshRepositoriesButton } from '../../../components/refresh-repositories-button';
@@ -25,11 +23,6 @@ interface PageSearchParams {
   githubAppInstallReason?: string;
 }
 
-function envOrDefault(value: string | undefined, fallback: string): string {
-  const normalized = value?.trim();
-  return normalized ? normalized : fallback;
-}
-
 export default async function ReposPage({
   params,
   searchParams,
@@ -41,22 +34,10 @@ export default async function ReposPage({
   const query = await searchParams;
   const installStatus = query.githubAppInstall;
   const installStatusReason = query.githubAppInstallReason;
-  const apiBase = envOrDefault(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:4001');
-  const webBase = envOrDefault(process.env.NEXT_PUBLIC_WEB_URL, 'http://localhost:4000');
-  const demoMode = Boolean(process.env.NEXT_PUBLIC_DEMO_USER_EMAIL);
-  const appInstallUrl = demoMode
-    ? null
-    : `${apiBase}/auth/github/app/install/start?orgId=${encodeURIComponent(orgId)}&returnTo=${encodeURIComponent(`${webBase}/app/${orgId}/repos`)}`;
   const repos = await apiGet<Repo[]>(`/v1/orgs/${orgId}/repos`).catch(() => []);
   const installations = await apiGet<GithubInstallation[]>(
     `/v1/orgs/${orgId}/github/installations`,
   ).catch(() => []);
-  const shouldAutoStartInstall =
-    Boolean(appInstallUrl) && installations.length === 0 && !installStatus;
-
-  if (shouldAutoStartInstall && appInstallUrl) {
-    redirect(appInstallUrl);
-  }
 
   return (
     <>
@@ -104,14 +85,6 @@ export default async function ReposPage({
               Installation callback failed{installStatusReason ? ` (${installStatusReason})` : ''}.
             </p>
           )}
-          {installStatus === 'error' && appInstallUrl && (
-            <div className="cta-row" style={{ marginTop: '0.75rem' }}>
-              <a className="btn btn-secondary" href={appInstallUrl}>
-                Retry GitHub App installation
-              </a>
-            </div>
-          )}
-
           <div style={{ marginTop: '1rem' }}>
             <RefreshRepositoriesButton
               orgId={orgId}
