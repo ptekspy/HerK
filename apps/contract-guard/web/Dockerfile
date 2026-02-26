@@ -21,4 +21,4 @@ COPY --from=builder /app/packages ./packages
 RUN pnpm install --frozen-lockfile --prod=false
 
 WORKDIR /app/apps/contract-guard/web
-CMD ["pnpm", "start", "--", "-p", "4000"]
+CMD ["pnpm", "start", "--", "-p", "4000", "-H", "0.0.0.0"]

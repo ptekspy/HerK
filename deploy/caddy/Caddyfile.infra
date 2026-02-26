@@ -13,7 +13,7 @@ paddy.systems {
     reverse_proxy redisinsight:5540
   }
 
-  @api path /v1/* /webhooks/* /auth/*
+  @api path /v1 /v1/* /webhooks /webhooks/* /auth /auth/* /health
   handle @api {
     reverse_proxy contractguard-api:4001
   }
