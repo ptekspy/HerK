@@ -6,22 +6,6 @@ info:
 servers:
   - url: https://api.example.com
 paths:
-  /health:
-    get:
-      summary: Service health check
-      operationId: getHealth
-      responses:
-        "200":
-          description: Healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok:
-                    type: boolean
-                required:
-                  - ok
 components:
   schemas:
     Contract:
