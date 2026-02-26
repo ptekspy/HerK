@@ -2,16 +2,14 @@ paddy.systems {
   encode zstd gzip
 
   handle_path /pgadmin* {
-    basicauth {
-      {$INFRA_ADMIN_USER} {$INFRA_ADMIN_PASS_HASH}
+    reverse_proxy pgadmin:80 {
+      header_up X-Script-Name /pgadmin
+      header_up X-Forwarded-Prefix /pgadmin
+      header_up X-Scheme {scheme}
     }
-    reverse_proxy pgadmin:80
   }
 
   handle_path /redisinsight* {
-    basicauth {
-      {$INFRA_ADMIN_USER} {$INFRA_ADMIN_PASS_HASH}
-    }
     reverse_proxy redisinsight:5540
   }
 
