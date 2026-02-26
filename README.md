@@ -82,6 +82,19 @@ docker compose up --build
 - API: `http://localhost/v1/...`
 - Webhooks: `http://localhost/webhooks/...`
 
+## Infra-Only Compose
+
+If you want only data + admin services (Postgres, Redis, pgAdmin, RedisInsight):
+
+```bash
+cp .env.infra.example .env.infra
+docker compose -f docker-compose.infra.yml --env-file .env.infra up -d
+```
+
+Admin UIs (localhost by default):
+- pgAdmin: `http://127.0.0.1:5050`
+- RedisInsight: `http://127.0.0.1:5540`
+
 ## Build and Test
 
 ```bash

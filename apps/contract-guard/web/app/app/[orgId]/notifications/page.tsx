@@ -1,4 +1,5 @@
 import { SectionHeader } from '../../../components/section-header';
+import { MarkNotificationsReadButton } from '../../../components/mark-notifications-read-button';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -7,6 +8,7 @@ interface Notification {
   kind: string;
   title: string;
   body: string;
+  link?: string | null;
   readAt: string | null;
 }
 
@@ -19,11 +21,19 @@ export default async function NotificationsPage({
   const notifications = await apiGet<Notification[]>(`/v1/orgs/${orgId}/notifications`).catch(
     () => [],
   );
+  const unreadIds = notifications.filter((notification) => !notification.readAt).map((notification) => notification.id);
 
   return (
     <>
       <SectionHeader title="Notifications" subtitle="In-app alerts for failing and warning checks" />
       <section className="card">
+        <div className="cta-row" style={{ marginTop: 0, marginBottom: '0.8rem' }}>
+          <MarkNotificationsReadButton
+            orgId={orgId}
+            label="Mark all unread as read"
+            disabled={unreadIds.length === 0}
+          />
+        </div>
         <table className="table">
           <thead>
             <tr>
@@ -31,6 +41,7 @@ export default async function NotificationsPage({
               <th>Title</th>
               <th>Message</th>
               <th>Read</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -38,8 +49,24 @@ export default async function NotificationsPage({
               <tr key={notification.id}>
                 <td>{notification.kind}</td>
                 <td>{notification.title}</td>
-                <td>{notification.body}</td>
+                <td>
+                  {notification.body}
+                  {notification.link ? (
+                    <>
+                      {' '}
+                      <a href={notification.link}>Open</a>
+                    </>
+                  ) : null}
+                </td>
                 <td>{notification.readAt ? 'Yes' : 'No'}</td>
+                <td>
+                  <MarkNotificationsReadButton
+                    orgId={orgId}
+                    ids={[notification.id]}
+                    label="Mark read"
+                    disabled={Boolean(notification.readAt)}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

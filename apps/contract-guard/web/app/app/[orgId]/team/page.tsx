@@ -1,5 +1,6 @@
 import { SectionHeader } from '../../../components/section-header';
-import { SimpleCreateForm } from '../../../components/simple-form';
+import { TeamInviteForm } from '../../../components/team-invite-form';
+import { TeamMemberActions } from '../../../components/team-member-actions';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -7,7 +8,7 @@ interface Member {
   id: string;
   role: string;
   user: {
-    email: string;
+    email: string | null;
     name: string | null;
   };
 }
@@ -29,14 +30,22 @@ export default async function TeamPage({ params }: { params: Promise<{ orgId: st
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {members.map((member) => (
                 <tr key={member.id}>
                   <td>{member.user.name ?? 'N/A'}</td>
-                  <td>{member.user.email}</td>
+                  <td>{member.user.email ?? 'N/A'}</td>
                   <td>{member.role}</td>
+                  <td>
+                    <TeamMemberActions
+                      orgId={orgId}
+                      memberId={member.id}
+                      initialRole={member.role}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -45,15 +54,7 @@ export default async function TeamPage({ params }: { params: Promise<{ orgId: st
 
         <article className="card card-grid-6">
           <h3>Invite member</h3>
-          <SimpleCreateForm
-            endpoint={`/v1/orgs/${orgId}/members`}
-            title="member"
-            fields={[
-              { name: 'email', label: 'Email', placeholder: 'engineer@acme.com' },
-              { name: 'role', label: 'Role', placeholder: 'MEMBER' },
-              { name: 'name', label: 'Name', placeholder: 'Teammate Name' },
-            ]}
-          />
+          <TeamInviteForm orgId={orgId} />
         </article>
       </section>
     </>

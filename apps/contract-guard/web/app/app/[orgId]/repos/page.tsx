@@ -1,6 +1,6 @@
 import { SectionHeader } from '../../../components/section-header';
 import { CreateRepoForm } from '../../../components/create-repo-form';
-import { SimpleCreateForm } from '../../../components/simple-form';
+import { InstallationSyncForm } from '../../../components/installation-sync-form';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -104,19 +104,7 @@ export default async function ReposPage({
           )}
 
           <h3 style={{ marginTop: '1.25rem' }}>Manual installation sync</h3>
-          <SimpleCreateForm
-            endpoint={`/v1/orgs/${orgId}/github/installations/sync`}
-            title="installation sync"
-            fields={[
-              {
-                name: 'installationId',
-                label: 'GitHub installation ID',
-                placeholder: '12345678',
-              },
-              { name: 'accountLogin', label: 'Account login', placeholder: 'acme' },
-              { name: 'syncRepositories', label: 'Sync repositories', placeholder: 'true' },
-            ]}
-          />
+          <InstallationSyncForm orgId={orgId} />
 
           <table className="table" style={{ marginTop: '1rem' }}>
             <thead>
