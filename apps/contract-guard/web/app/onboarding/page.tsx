@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { SubscriptionCheckoutForm } from '../components/subscription-checkout-form';
+import { SiteLogo } from '../components/site-logo';
 import { apiGet } from '../../lib/api-server';
 import { getRequestOrigin } from '../../lib/request-origin';
 
@@ -80,25 +81,25 @@ export default async function OnboardingPage({
   return (
     <main className="page-wrap onboarding-shell">
       <section className="onboarding-auth-card">
-        <div className="onboarding-brand-mark" aria-hidden="true">
-          ACG
+        <div className="onboarding-auth-head">
+          <SiteLogo className="onboarding-logo" showWordmark={false} />
+          <nav aria-label="Authentication mode" className="onboarding-auth-tabs">
+            <Link
+              aria-current={isSignInMode ? 'page' : undefined}
+              className={`onboarding-auth-tab${isSignInMode ? ' is-active' : ''}`}
+              href="/onboarding?mode=signin"
+            >
+              Sign in
+            </Link>
+            <Link
+              aria-current={isSignInMode ? undefined : 'page'}
+              className={`onboarding-auth-tab${isSignInMode ? '' : ' is-active'}`}
+              href="/onboarding?mode=signup"
+            >
+              Create account
+            </Link>
+          </nav>
         </div>
-        <nav aria-label="Authentication mode" className="onboarding-auth-tabs">
-          <Link
-            aria-current={isSignInMode ? 'page' : undefined}
-            className={`onboarding-auth-tab${isSignInMode ? ' is-active' : ''}`}
-            href="/onboarding?mode=signin"
-          >
-            Sign in
-          </Link>
-          <Link
-            aria-current={isSignInMode ? undefined : 'page'}
-            className={`onboarding-auth-tab${isSignInMode ? '' : ' is-active'}`}
-            href="/onboarding?mode=signup"
-          >
-            Create account
-          </Link>
-        </nav>
         <h1>{isSignInMode ? 'Sign in to your account' : 'Create your account'}</h1>
         <p className="onboarding-auth-copy">
           {isSignInMode

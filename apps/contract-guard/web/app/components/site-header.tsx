@@ -1,10 +1,10 @@
 import Link from 'next/link';
 
 import type { MarketingNavState } from '../content/site';
-import { SITE_BRAND_NAME } from '../content/site';
 
 import { LogoutButton } from './logout-button';
 import { MobileNavDrawer } from './mobile-nav-drawer';
+import { SiteLogo } from './site-logo';
 import { SiteNav } from './site-nav';
 
 export function SiteHeader({ navState }: { navState: MarketingNavState }) {
@@ -13,7 +13,7 @@ export function SiteHeader({ navState }: { navState: MarketingNavState }) {
       <div className="site-header-inner page-wrap">
         <div className="site-brand-wrap">
           <Link className="site-brand-mark" href="/">
-            {SITE_BRAND_NAME}
+            <SiteLogo />
           </Link>
           <SiteNav links={navState.navLinks} className="site-nav-links desktop-site-nav" />
         </div>
