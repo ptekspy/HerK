@@ -21,6 +21,6 @@ COPY --from=builder /app/apps ./apps
 COPY --from=builder /app/packages ./packages
 
 RUN pnpm install --frozen-lockfile --prod=false
+RUN chmod +x /app/apps/contract-guard/api/docker-entrypoint.sh
 
-WORKDIR /app/apps/contract-guard/api
-CMD ["pnpm", "start:prod"]
+CMD ["/app/apps/contract-guard/api/docker-entrypoint.sh"]
