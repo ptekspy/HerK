@@ -95,6 +95,20 @@ Admin UIs (localhost by default):
 - pgAdmin: `http://127.0.0.1:5050`
 - RedisInsight: `http://127.0.0.1:5540`
 
+To expose those admin UIs over the web, start infra Caddy and route:
+- `http://<server>/pgadmin`
+- `http://<server>/redisinsight`
+
+Set in `.env.infra`:
+- `INFRA_ADMIN_USER`
+- `INFRA_ADMIN_PASS_HASH` (bcrypt hash for Caddy `basicauth`)
+
+Generate hash:
+
+```bash
+docker run --rm caddy:2-alpine caddy hash-password --plaintext 'change-this-password'
+```
+
 ## Build and Test
 
 ```bash

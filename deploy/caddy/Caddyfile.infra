@@ -1,0 +1,23 @@
+:80 {
+  encode zstd gzip
+
+  @pgadmin path /pgadmin*
+  handle_path @pgadmin {
+    basicauth {
+      {$INFRA_ADMIN_USER} {$INFRA_ADMIN_PASS_HASH}
+    }
+    reverse_proxy pgadmin:80
+  }
+
+  @redisinsight path /redisinsight*
+  handle_path @redisinsight {
+    basicauth {
+      {$INFRA_ADMIN_USER} {$INFRA_ADMIN_PASS_HASH}
+    }
+    reverse_proxy redisinsight:5540
+  }
+
+  handle {
+    respond "Infra proxy is running. Use /pgadmin or /redisinsight." 200
+  }
+}

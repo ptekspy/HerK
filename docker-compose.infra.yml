@@ -66,8 +66,30 @@ services:
     ports:
       - '127.0.0.1:${REDISINSIGHT_PORT:-5540}:5540'
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: contractguard-infra-caddy
+    restart: unless-stopped
+    depends_on:
+      pgadmin:
+        condition: service_started
+      redisinsight:
+        condition: service_started
+    environment:
+      INFRA_ADMIN_USER: ${INFRA_ADMIN_USER}
+      INFRA_ADMIN_PASS_HASH: ${INFRA_ADMIN_PASS_HASH}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/caddy/Caddyfile.infra:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
 volumes:
   postgres_data:
   pgadmin_data:
   redis_data:
   redisinsight_data:
+  caddy_data:
+  caddy_config:
