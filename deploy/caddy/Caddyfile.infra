@@ -15,10 +15,10 @@ paddy.systems {
 
   @api path /v1 /v1/* /webhooks /webhooks/* /auth /auth/* /health
   handle @api {
-    reverse_proxy api:4001
+    reverse_proxy contractguard-api:4001
   }
 
   handle {
-    reverse_proxy web:4000
+    reverse_proxy contractguard-web:4000
   }
 }
