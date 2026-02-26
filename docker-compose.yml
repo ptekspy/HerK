@@ -1,53 +1,24 @@
 version: '3.9'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: contractguard-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: contractguard
-      POSTGRES_USER: contractguard
-      POSTGRES_PASSWORD: contractguard
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U contractguard -d contractguard']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: contractguard-redis
-    restart: unless-stopped
-    command: ['redis-server', '--appendonly', 'yes']
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: .
       dockerfile: apps/contract-guard/api/Dockerfile
     container_name: contractguard-api
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     env_file:
       - .env.compose
     environment:
       PORT: 4001
-      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard?schema=contract_guard
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - '127.0.0.1:4001:4001'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   worker:
     build:
@@ -55,17 +26,15 @@ services:
       dockerfile: apps/contract-guard/worker/Dockerfile
     container_name: contractguard-worker
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     env_file:
       - .env.compose
     environment:
-      DATABASE_URL: postgresql://contractguard:contractguard@postgres:5432/contractguard?schema=contract_guard
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   web:
     build:
@@ -79,25 +48,7 @@ services:
       - .env.compose
     environment:
       PORT: 4000
-      NEXT_PUBLIC_API_URL: http://api:4001
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: contractguard-caddy
-    restart: unless-stopped
-    depends_on:
-      - web
-      - api
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://paddy.systems}
+      NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-https://paddy.systems}
     ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
-volumes:
-  postgres_data:
-  redis_data:
-  caddy_data:
-  caddy_config:
+      - '127.0.0.1:4000:4000'

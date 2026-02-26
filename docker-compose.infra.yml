@@ -79,6 +79,8 @@ services:
     environment:
       INFRA_ADMIN_USER: ${INFRA_ADMIN_USER}
       INFRA_ADMIN_PASS_HASH: ${INFRA_ADMIN_PASS_HASH}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '80:80'
       - '443:443'

@@ -13,7 +13,12 @@ paddy.systems {
     reverse_proxy redisinsight:5540
   }
 
+  @api path /v1/* /webhooks/* /auth/*
+  handle @api {
+    reverse_proxy host.docker.internal:4001
+  }
+
   handle {
-    respond "Infra proxy is running. Use /pgadmin or /redisinsight." 200
+    reverse_proxy host.docker.internal:4000
   }
 }

@@ -69,18 +69,18 @@ Use a schema-scoped Postgres URL for each app package. ContractGuard defaults to
 
 - `postgresql://.../contractguard?schema=contract_guard`
 
-## Full Docker Compose
+## App Compose
 
-A full single-VM runtime (web, api, worker, postgres, redis, caddy) is included:
+An app-only runtime (web, api, worker) is included. It is designed to run against existing infra (Postgres/Redis/Caddy):
 
 ```bash
 cp .env.compose.example .env.compose
-docker compose up --build
+docker compose up --build -d
 ```
 
-- Web/UI: `http://localhost`
-- API: `http://localhost/v1/...`
-- Webhooks: `http://localhost/webhooks/...`
+By default it binds locally:
+- Web container: `127.0.0.1:4000`
+- API container: `127.0.0.1:4001`
 
 ## Infra-Only Compose
 
