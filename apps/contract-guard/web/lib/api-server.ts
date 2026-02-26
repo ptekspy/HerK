@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:4001';
+  process.env.INTERNAL_API_URL?.trim() ||
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  'http://contractguard-api:4001';
 
 const demoEmail = process.env.NEXT_PUBLIC_DEMO_USER_EMAIL;
 const demoName = process.env.NEXT_PUBLIC_DEMO_USER_NAME;
