@@ -20,6 +20,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - contractguard_net
 
   pgadmin:
     image: dpage/pgadmin4:8
@@ -37,6 +39,8 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     ports:
       - '127.0.0.1:${PGADMIN_PORT:-5050}:80'
+    networks:
+      - contractguard_net
 
   redis:
     image: redis:7-alpine
@@ -54,6 +58,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - contractguard_net
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -66,6 +72,8 @@ services:
       - redisinsight_data:/data
     ports:
       - '127.0.0.1:${REDISINSIGHT_PORT:-5540}:5540'
+    networks:
+      - contractguard_net
 
   caddy:
     image: caddy:2-alpine
@@ -88,6 +96,8 @@ services:
       - ./deploy/caddy/Caddyfile.infra:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - contractguard_net
 
 volumes:
   postgres_data:
@@ -96,3 +106,7 @@ volumes:
   redisinsight_data:
   caddy_data:
   caddy_config:
+
+networks:
+  contractguard_net:
+    name: contractguard_net

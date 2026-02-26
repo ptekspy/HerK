@@ -19,6 +19,8 @@ services:
       - '127.0.0.1:4001:4001'
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    networks:
+      - contractguard_net
 
   worker:
     build:
@@ -35,6 +37,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    networks:
+      - contractguard_net
 
   web:
     build:
@@ -52,3 +56,9 @@ services:
       NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-https://paddy.systems}
     ports:
       - '127.0.0.1:4000:4000'
+    networks:
+      - contractguard_net
+
+networks:
+  contractguard_net:
+    external: true
