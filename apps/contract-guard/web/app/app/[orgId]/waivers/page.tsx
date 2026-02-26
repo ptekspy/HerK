@@ -1,3 +1,13 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
+
 import { SectionHeader } from '../../../components/section-header';
 import { CreateWaiverForm } from '../../../components/create-waiver-form';
 import { WaiverActions } from '../../../components/waiver-actions';
@@ -35,45 +45,53 @@ export default async function WaiversPage({ params }: { params: Promise<{ orgId:
     <>
       <SectionHeader title="Waivers" subtitle="Time-bound exceptions with auditability" />
 
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Grant waiver</h3>
-          <CreateWaiverForm orgId={orgId} services={services} repositories={repositories} />
-        </article>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Grant waiver</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CreateWaiverForm orgId={orgId} services={services} repositories={repositories} />
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Notes</h3>
-          <p>
-            Waivers should remain narrowly scoped and short-lived. Each waiver is recorded for
-            policy and incident audits.
-          </p>
-          <table className="table mt-4">
-            <thead>
-              <tr>
-                <th>Reason</th>
-                <th>Scope</th>
-                <th>PR</th>
-                <th>Expires</th>
-                <th>By</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {waivers.map((waiver) => (
-                <tr key={waiver.id}>
-                  <td>{waiver.reason}</td>
-                  <td>{waiver.service?.name ?? waiver.repository?.fullName ?? 'Org-wide'}</td>
-                  <td>{waiver.pullRequestNumber ?? 'Any'}</td>
-                  <td>{new Date(waiver.expiresAt).toLocaleString()}</td>
-                  <td>{waiver.createdBy.name ?? waiver.createdBy.email ?? 'Unknown'}</td>
-                  <td>
-                    <WaiverActions orgId={orgId} waiverId={waiver.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Notes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Waivers should remain narrowly scoped and short-lived. Each waiver is recorded for
+              policy and incident audits.
+            </p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Scope</TableHead>
+                  <TableHead>PR</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead>By</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {waivers.map((waiver) => (
+                  <TableRow key={waiver.id}>
+                    <TableCell>{waiver.reason}</TableCell>
+                    <TableCell>{waiver.service?.name ?? waiver.repository?.fullName ?? 'Org-wide'}</TableCell>
+                    <TableCell>{waiver.pullRequestNumber ?? 'Any'}</TableCell>
+                    <TableCell>{new Date(waiver.expiresAt).toLocaleString()}</TableCell>
+                    <TableCell>{waiver.createdBy.name ?? waiver.createdBy.email ?? 'Unknown'}</TableCell>
+                    <TableCell>
+                      <WaiverActions orgId={orgId} waiverId={waiver.id} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </section>
     </>
   );

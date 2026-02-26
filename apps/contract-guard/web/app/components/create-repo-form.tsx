@@ -2,6 +2,18 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Input } from '@herk/ui/base/input';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiPost } from '../../lib/api';
 
@@ -46,7 +58,7 @@ export function CreateRepoForm({ orgId, installations }: CreateRepoFormProps) {
         githubInstallationId,
         defaultBranch,
       });
-      setOk('repository mapped.');
+      setOk('Repository mapped.');
       setOwner('');
       setName('');
       setDefaultBranch('main');
@@ -59,62 +71,83 @@ export function CreateRepoForm({ orgId, installations }: CreateRepoFormProps) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-grid">
-      <label>
-        Installation
-        <select
-          value={githubInstallationId}
-          onChange={(event) => setGithubInstallationId(event.target.value)}
-          disabled={!hasInstallations || loading}
-          required
-        >
-          {installations.map((installation) => (
-            <option key={installation.id} value={installation.id}>
-              {installation.accountLogin} ({installation.installationId})
-            </option>
-          ))}
-        </select>
-      </label>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Installation</Label>
+          <Select
+            value={githubInstallationId}
+            onValueChange={setGithubInstallationId}
+            disabled={!hasInstallations || loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select installation" />
+            </SelectTrigger>
+            <SelectContent>
+              {installations.map((installation) => (
+                <SelectItem key={installation.id} value={installation.id}>
+                  {installation.accountLogin} ({installation.installationId})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <label>
-        Owner
-        <input
-          value={owner}
-          onChange={(event) => setOwner(event.target.value)}
-          placeholder="acme"
-          required
-        />
-      </label>
+        <div className="space-y-2">
+          <Label htmlFor="repo-owner">Owner</Label>
+          <Input
+            id="repo-owner"
+            value={owner}
+            onChange={(event) => setOwner(event.target.value)}
+            placeholder="acme"
+            required
+          />
+        </div>
 
-      <label>
-        Repository name
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="platform-api"
-          required
-        />
-      </label>
+        <div className="space-y-2">
+          <Label htmlFor="repo-name">Repository name</Label>
+          <Input
+            id="repo-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="platform-api"
+            required
+          />
+        </div>
 
-      <label>
-        Default branch
-        <input
-          value={defaultBranch}
-          onChange={(event) => setDefaultBranch(event.target.value)}
-          placeholder="main"
-          required
-        />
-      </label>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="repo-branch">Default branch</Label>
+          <Input
+            id="repo-branch"
+            value={defaultBranch}
+            onChange={(event) => setDefaultBranch(event.target.value)}
+            placeholder="main"
+            required
+          />
+        </div>
+      </div>
 
-      <button className="btn btn-primary" type="submit" disabled={loading || !hasInstallations}>
+      <Button type="submit" disabled={loading || !hasInstallations}>
         {loading ? 'Saving…' : 'Map repository'}
-      </button>
+      </Button>
 
-      {!hasInstallations && (
-        <p className="flash">No installation found yet. Install GitHub App and run installation sync.</p>
-      )}
-      {error && <p className="flash flash-error">{error}</p>}
-      {ok && <p className="flash flash-ok">{ok}</p>}
+      {!hasInstallations ? (
+        <Alert>
+          <AlertDescription>No installation found yet. Install GitHub App and run installation sync.</AlertDescription>
+        </Alert>
+      ) : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

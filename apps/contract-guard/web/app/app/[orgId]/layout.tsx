@@ -10,9 +10,9 @@ export default async function OrgLayout({
   const { orgId } = await params;
 
   return (
-    <div className="app-shell">
+    <div className="mx-auto w-full max-w-[1400px] md:flex md:gap-0 md:px-4 lg:px-6">
       <OrgNav orgId={orgId} />
-      <main className="main-panel page-wrap">{children}</main>
+      <main className="w-full px-4 py-6 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

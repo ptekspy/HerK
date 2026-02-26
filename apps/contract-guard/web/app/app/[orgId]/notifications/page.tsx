@@ -1,3 +1,13 @@
+import { Card, CardContent } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
+
 import { SectionHeader } from '../../../components/section-header';
 import { MarkNotificationsReadButton } from '../../../components/mark-notifications-read-button';
 import { PrFailureEmailToggle } from '../../../components/pr-failure-email-toggle';
@@ -39,52 +49,54 @@ export default async function NotificationsPage({
     <>
       <SectionHeader title="Notifications" subtitle="In-app alerts for failing and warning checks" />
       <PrFailureEmailToggle orgId={orgId} initialValue={preferences.emailOnPrFailure} />
-      <section className="card">
-        <div className="cta-row mt-0 mb-3">
-          <MarkNotificationsReadButton
-            orgId={orgId}
-            label="Mark all unread as read"
-            disabled={unreadIds.length === 0}
-          />
-        </div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Title</th>
-              <th>Message</th>
-              <th>Read</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {notifications.map((notification) => (
-              <tr key={notification.id}>
-                <td>{notification.kind}</td>
-                <td>{notification.title}</td>
-                <td>
-                  {notification.body}
-                  {notification.link ? (
-                    <>
-                      {' '}
-                      <a href={notification.link}>Open</a>
-                    </>
-                  ) : null}
-                </td>
-                <td>{notification.readAt ? 'Yes' : 'No'}</td>
-                <td>
-                  <MarkNotificationsReadButton
-                    orgId={orgId}
-                    ids={[notification.id]}
-                    label="Mark read"
-                    disabled={Boolean(notification.readAt)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
+          <div className="flex flex-wrap gap-2">
+            <MarkNotificationsReadButton
+              orgId={orgId}
+              label="Mark all unread as read"
+              disabled={unreadIds.length === 0}
+            />
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Message</TableHead>
+                <TableHead>Read</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {notifications.map((notification) => (
+                <TableRow key={notification.id}>
+                  <TableCell>{notification.kind}</TableCell>
+                  <TableCell>{notification.title}</TableCell>
+                  <TableCell>
+                    {notification.body}
+                    {notification.link ? (
+                      <>
+                        {' '}
+                        <a className="text-primary hover:underline" href={notification.link}>Open</a>
+                      </>
+                    ) : null}
+                  </TableCell>
+                  <TableCell>{notification.readAt ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>
+                    <MarkNotificationsReadButton
+                      orgId={orgId}
+                      ids={[notification.id]}
+                      label="Mark read"
+                      disabled={Boolean(notification.readAt)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </>
   );
 }

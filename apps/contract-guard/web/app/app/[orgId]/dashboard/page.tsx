@@ -1,3 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+
 import { SectionHeader } from '../../../components/section-header';
 import { DashboardAttentionNeeded } from '../../../components/dashboard-attention-needed';
 import { DashboardKpiGrid } from '../../../components/dashboard-kpi-grid';
@@ -42,27 +44,33 @@ function LegacyDashboard({ org }: { org: OrgSummary }) {
         subtitle="Dashboard summary endpoint not available yet; showing compatibility fallback."
       />
 
-      <section className="grid">
-        <article className="card card-grid-4">
-          <h2>Plan</h2>
-          <p>{org.billingPlan}</p>
-        </article>
-        <article className="card card-grid-4">
-          <h2>Repositories</h2>
-          <p>{org._count.repositories}</p>
-        </article>
-        <article className="card card-grid-4">
-          <h2>Services</h2>
-          <p>{org._count.services}</p>
-        </article>
-        <article className="card card-grid-6">
-          <h3>Checks processed</h3>
-          <p>{org._count.checkRuns} total PR analyses have been recorded.</p>
-        </article>
-        <article className="card card-grid-6">
-          <h3>Members</h3>
-          <p>{org._count.members} collaborators currently have access.</p>
-        </article>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Plan</CardTitle>
+          </CardHeader>
+          <CardContent><p className="text-2xl font-semibold">{org.billingPlan}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Repositories</CardTitle>
+          </CardHeader>
+          <CardContent><p className="text-2xl font-semibold">{org._count.repositories}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Services</CardTitle>
+          </CardHeader>
+          <CardContent><p className="text-2xl font-semibold">{org._count.services}</p></CardContent>
+        </Card>
+        <Card className="sm:col-span-2 lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="text-lg">Checks processed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{org._count.checkRuns} total PR analyses have been recorded.</p>
+          </CardContent>
+        </Card>
       </section>
     </>
   );
@@ -113,10 +121,14 @@ export default async function DashboardPage({
           compact={summary.wizard.isDismissed}
         />
       ) : (
-        <section className="card dashboard-setup-complete">
-          <h3>Setup complete</h3>
-          <p>Your workspace is fully configured. Use quick actions to continue daily operations.</p>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Setup complete</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Your workspace is fully configured. Use quick actions to continue daily operations.</p>
+          </CardContent>
+        </Card>
       )}
 
       <DashboardKpiGrid
@@ -127,7 +139,7 @@ export default async function DashboardPage({
 
       <DashboardQuickActions orgId={orgId} />
 
-      <section className="grid dashboard-activity-grid">
+      <section className="grid gap-4 xl:grid-cols-2">
         <DashboardRecentChecks checks={summary.recentChecks} />
         <DashboardRecentNotifications notifications={summary.recentNotifications} />
       </section>

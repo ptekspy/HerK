@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@herk/ui/base/button';
+import { cn } from '@herk/utils';
 
 export function LogoutButton({ className }: { className?: string }) {
   const [loading, setLoading] = useState(false);
@@ -24,8 +26,14 @@ export function LogoutButton({ className }: { className?: string }) {
   };
 
   return (
-    <button className={className} type="button" onClick={onLogout} disabled={loading}>
+    <Button
+      className={cn(className)}
+      type="button"
+      variant="ghost"
+      onClick={onLogout}
+      disabled={loading}
+    >
       {loading ? 'Logging out…' : 'Log out'}
-    </button>
+    </Button>
   );
 }

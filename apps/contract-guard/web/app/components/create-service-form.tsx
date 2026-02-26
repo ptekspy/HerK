@@ -3,6 +3,19 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Checkbox } from '@herk/ui/base/checkbox';
+import { Input } from '@herk/ui/base/input';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiPost } from '../../lib/api';
 
@@ -75,7 +88,7 @@ export function CreateServiceForm({
     setLoading(true);
     try {
       await apiPost(`/v1/orgs/${orgId}/services`, payload);
-      setOk('service created.');
+      setOk('Service created.');
       setName('');
       setSlug('');
       if (contractSourceType === 'PUBLIC_URL') {
@@ -90,111 +103,135 @@ export function CreateServiceForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-grid">
-      <label>
-        Repository
-        <select
-          name="repositoryId"
-          value={repositoryId}
-          onChange={(event) => setRepositoryId(event.target.value)}
-          disabled={!hasRepositories || loading}
-          required
-        >
-          {repositories.map((repo) => (
-            <option key={repo.id} value={repo.id}>
-              {repo.fullName}
-            </option>
-          ))}
-        </select>
-      </label>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Repository</Label>
+          <Select
+            value={repositoryId}
+            onValueChange={setRepositoryId}
+            disabled={!hasRepositories || loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select repository" />
+            </SelectTrigger>
+            <SelectContent>
+              {repositories.map((repo) => (
+                <SelectItem key={repo.id} value={repo.id}>
+                  {repo.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <label>
-        Name
-        <input
-          name="name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Public API"
-          required
-        />
-      </label>
-
-      <label>
-        Slug
-        <input
-          name="slug"
-          value={slug}
-          onChange={(event) => setSlug(event.target.value)}
-          placeholder="public-api"
-          required
-        />
-      </label>
-
-      <label>
-        Source type
-        <select
-          name="contractSourceType"
-          value={contractSourceType}
-          onChange={(event) =>
-            setContractSourceType(event.target.value as 'GITHUB_FILE' | 'PUBLIC_URL')
-          }
-          required
-        >
-          <option value="GITHUB_FILE">GITHUB_FILE</option>
-          <option value="PUBLIC_URL">PUBLIC_URL</option>
-        </select>
-      </label>
-
-      {contractSourceType === 'GITHUB_FILE' ? (
-        <label>
-          Contract path
-          <input
-            name="contractPath"
-            value={contractPath}
-            onChange={(event) => setContractPath(event.target.value)}
-            placeholder="openapi.yaml"
+        <div className="space-y-2">
+          <Label htmlFor="service-name">Name</Label>
+          <Input
+            id="service-name"
+            name="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Public API"
             required
           />
-        </label>
-      ) : null}
+        </div>
 
-      {contractSourceType === 'PUBLIC_URL' ? (
-        <label>
-          Contract URL template
-          <input
-            name="contractUrlTemplate"
-            value={contractUrlTemplate}
-            onChange={(event) => setContractUrlTemplate(event.target.value)}
-            placeholder="https://example.com/openapi?sha={sha}"
+        <div className="space-y-2">
+          <Label htmlFor="service-slug">Slug</Label>
+          <Input
+            id="service-slug"
+            name="slug"
+            value={slug}
+            onChange={(event) => setSlug(event.target.value)}
+            placeholder="public-api"
             required
           />
-        </label>
-      ) : null}
+        </div>
 
-      <label className="inline-checkbox">
-        <input
-          type="checkbox"
-          name="isActive"
-          checked={isActive}
-          onChange={(event) => setIsActive(event.target.checked)}
-        />
-        Active service
-      </label>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Source type</Label>
+          <Select
+            value={contractSourceType}
+            onValueChange={(value) => setContractSourceType(value as 'GITHUB_FILE' | 'PUBLIC_URL')}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="GITHUB_FILE">GITHUB_FILE</SelectItem>
+              <SelectItem value="PUBLIC_URL">PUBLIC_URL</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <button className="btn btn-primary" type="submit" disabled={!canSubmit}>
+        {contractSourceType === 'GITHUB_FILE' ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="service-contract-path">Contract path</Label>
+            <Input
+              id="service-contract-path"
+              name="contractPath"
+              value={contractPath}
+              onChange={(event) => setContractPath(event.target.value)}
+              placeholder="openapi.yaml"
+              required
+            />
+          </div>
+        ) : null}
+
+        {contractSourceType === 'PUBLIC_URL' ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="service-contract-url">Contract URL template</Label>
+            <Input
+              id="service-contract-url"
+              name="contractUrlTemplate"
+              value={contractUrlTemplate}
+              onChange={(event) => setContractUrlTemplate(event.target.value)}
+              placeholder="https://example.com/openapi?sha={sha}"
+              required
+            />
+          </div>
+        ) : null}
+
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <Checkbox
+            id="service-active"
+            checked={isActive}
+            onCheckedChange={(checked) => setIsActive(Boolean(checked))}
+          />
+          <Label htmlFor="service-active">Active service</Label>
+        </div>
+      </div>
+
+      <Button type="submit" disabled={!canSubmit}>
         {loading ? 'Saving…' : 'Create service'}
-      </button>
+      </Button>
 
       {!isSubscriptionActive ? (
-        <p className="flash flash-error">
-          Subscription required before creating services. <Link href={billingHref}>Go to billing</Link>.
-        </p>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Subscription required before creating services. <Link className="underline" href={billingHref}>Go to billing</Link>.
+          </AlertDescription>
+        </Alert>
       ) : null}
       {!hasRepositories ? (
-        <p className="flash">Connect and sync a repository first from the Repositories page.</p>
+        <Alert>
+          <AlertDescription>Connect and sync a repository first from the Repositories page.</AlertDescription>
+        </Alert>
       ) : null}
-      {error ? <p className="flash flash-error">{error}</p> : null}
-      {ok ? <p className="flash flash-ok">{ok}</p> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

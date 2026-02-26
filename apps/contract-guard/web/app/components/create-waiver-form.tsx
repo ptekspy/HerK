@@ -2,6 +2,18 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Input } from '@herk/ui/base/input';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiPost } from '../../lib/api';
 
@@ -105,7 +117,7 @@ export function CreateWaiverForm({ orgId, services, repositories }: CreateWaiver
     setLoading(true);
     try {
       await apiPost(`/v1/orgs/${orgId}/waivers`, payload);
-      setOk('waiver created.');
+      setOk('Waiver created.');
       setReason('');
       setPullRequestNumber('');
       router.refresh();
@@ -117,94 +129,114 @@ export function CreateWaiverForm({ orgId, services, repositories }: CreateWaiver
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-grid">
-      <label>
-        Scope
-        <select
-          value={scope}
-          onChange={(event) => setScope(event.target.value as WaiverScope)}
-          required
-        >
-          {scopeOptions.map((option) => (
-            <option key={option.value} value={option.value} disabled={option.disabled}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Scope</Label>
+          <Select value={scope} onValueChange={(value) => setScope(value as WaiverScope)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {scopeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      {scope === 'SERVICE' && (
-        <label>
-          Service
-          <select
-            value={serviceId}
-            onChange={(event) => setServiceId(event.target.value)}
+        {scope === 'SERVICE' ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Service</Label>
+            <Select value={serviceId} onValueChange={setServiceId} disabled={services.length === 0}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select service" />
+              </SelectTrigger>
+              <SelectContent>
+                {services.map((service) => (
+                  <SelectItem key={service.id} value={service.id}>
+                    {service.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        {scope === 'REPOSITORY' ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Repository</Label>
+            <Select
+              value={repositoryId}
+              onValueChange={setRepositoryId}
+              disabled={repositories.length === 0}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select repository" />
+              </SelectTrigger>
+              <SelectContent>
+                {repositories.map((repository) => (
+                  <SelectItem key={repository.id} value={repository.id}>
+                    {repository.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <Label htmlFor="waiver-pr">PR number (optional)</Label>
+          <Input
+            id="waiver-pr"
+            value={pullRequestNumber}
+            onChange={(event) => setPullRequestNumber(event.target.value)}
+            placeholder="12"
+            inputMode="numeric"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="waiver-reason">Reason</Label>
+          <Input
+            id="waiver-reason"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            placeholder="Migration window for mobile clients"
             required
-            disabled={services.length === 0}
-          >
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+          />
+        </div>
 
-      {scope === 'REPOSITORY' && (
-        <label>
-          Repository
-          <select
-            value={repositoryId}
-            onChange={(event) => setRepositoryId(event.target.value)}
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="waiver-expiry">Expiry</Label>
+          <Input
+            id="waiver-expiry"
+            type="datetime-local"
+            value={expiresAtLocal}
+            onChange={(event) => setExpiresAtLocal(event.target.value)}
             required
-            disabled={repositories.length === 0}
-          >
-            {repositories.map((repository) => (
-              <option key={repository.id} value={repository.id}>
-                {repository.fullName}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+          />
+        </div>
+      </div>
 
-      <label>
-        PR number (optional)
-        <input
-          value={pullRequestNumber}
-          onChange={(event) => setPullRequestNumber(event.target.value)}
-          placeholder="12"
-          inputMode="numeric"
-        />
-      </label>
-
-      <label>
-        Reason
-        <input
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          placeholder="Migration window for mobile clients"
-          required
-        />
-      </label>
-
-      <label>
-        Expiry
-        <input
-          type="datetime-local"
-          value={expiresAtLocal}
-          onChange={(event) => setExpiresAtLocal(event.target.value)}
-          required
-        />
-      </label>
-
-      <button className="btn btn-primary" type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         {loading ? 'Saving…' : 'Create waiver'}
-      </button>
+      </Button>
 
-      {error && <p className="flash flash-error">{error}</p>}
-      {ok && <p className="flash flash-ok">{ok}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

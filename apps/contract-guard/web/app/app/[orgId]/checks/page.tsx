@@ -1,4 +1,14 @@
 import Link from 'next/link';
+import { Badge } from '@herk/ui/base/badge';
+import { Card, CardContent } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
 
 import { SectionHeader } from '../../../components/section-header';
 
@@ -14,10 +24,10 @@ interface Check {
   service: { name: string };
 }
 
-function badgeClass(conclusion: Check['conclusion']) {
-  if (conclusion === 'FAIL' || conclusion === 'ERROR') return 'badge badge-fail';
-  if (conclusion === 'WARN') return 'badge badge-warn';
-  return 'badge badge-pass';
+function badgeVariant(conclusion: Check['conclusion']) {
+  if (conclusion === 'FAIL' || conclusion === 'ERROR') return 'destructive' as const;
+  if (conclusion === 'WARN') return 'outline' as const;
+  return 'secondary' as const;
 }
 
 export default async function ChecksPage({ params }: { params: Promise<{ orgId: string }> }) {
@@ -29,32 +39,36 @@ export default async function ChecksPage({ params }: { params: Promise<{ orgId: 
     <>
       <SectionHeader title="Checks" subtitle="Historical contract analyses and PR outcomes" />
 
-      <section className="card">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>PR</th>
-              <th>Service</th>
-              <th>Status</th>
-              <th>Summary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {checks.map((check) => (
-              <tr key={check.id}>
-                <td>
-                  <Link href={`/app/${orgId}/checks/${check.id}`}>#{check.pullRequestNumber}</Link>
-                </td>
-                <td>{check.service?.name ?? 'N/A'}</td>
-                <td>
-                  <span className={badgeClass(check.conclusion)}>{check.conclusion ?? check.status}</span>
-                </td>
-                <td>{check.summary ?? 'No summary'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <Card>
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>PR</TableHead>
+                <TableHead>Service</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Summary</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {checks.map((check) => (
+                <TableRow key={check.id}>
+                  <TableCell>
+                    <Link className="text-primary hover:underline" href={`/app/${orgId}/checks/${check.id}`}>
+                      #{check.pullRequestNumber}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{check.service?.name ?? 'N/A'}</TableCell>
+                  <TableCell>
+                    <Badge variant={badgeVariant(check.conclusion)}>{check.conclusion ?? check.status}</Badge>
+                  </TableCell>
+                  <TableCell>{check.summary ?? 'No summary'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </>
   );
 }

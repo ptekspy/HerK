@@ -2,6 +2,18 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Input } from '@herk/ui/base/input';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiPost } from '../../lib/api';
 
@@ -29,7 +41,7 @@ export function TeamInviteForm({ orgId }: { orgId: string }) {
         name: name.trim() ? name : undefined,
         role,
       });
-      setOk('member invited.');
+      setOk('Member invited.');
       setEmail('');
       setName('');
       setRole('MEMBER');
@@ -42,44 +54,63 @@ export function TeamInviteForm({ orgId }: { orgId: string }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-grid">
-      <label>
-        Email
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="engineer@acme.com"
-          required
-        />
-      </label>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="member-email">Email</Label>
+          <Input
+            id="member-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="engineer@acme.com"
+            required
+          />
+        </div>
 
-      <label>
-        Name (optional)
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Teammate Name"
-        />
-      </label>
+        <div className="space-y-2">
+          <Label htmlFor="member-name">Name (optional)</Label>
+          <Input
+            id="member-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Teammate Name"
+          />
+        </div>
 
-      <label>
-        Role
-        <select value={role} onChange={(event) => setRole(event.target.value as MemberRole)} required>
-          {MEMBER_ROLES.map((memberRole) => (
-            <option key={memberRole} value={memberRole}>
-              {memberRole}
-            </option>
-          ))}
-        </select>
-      </label>
+        <div className="space-y-2">
+          <Label>Role</Label>
+          <Select value={role} onValueChange={(value) => setRole(value as MemberRole)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MEMBER_ROLES.map((memberRole) => (
+                <SelectItem key={memberRole} value={memberRole}>
+                  {memberRole}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-      <button className="btn btn-primary" type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         {loading ? 'Inviting…' : 'Invite member'}
-      </button>
+      </Button>
 
-      {error && <p className="flash flash-error">{error}</p>}
-      {ok && <p className="flash flash-ok">{ok}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

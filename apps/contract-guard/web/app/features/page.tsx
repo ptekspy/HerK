@@ -62,31 +62,35 @@ const FEATURE_SECTIONS = [
 
 export default function FeaturesPage() {
   return (
-    <main className="marketing-main page-wrap">
-      <section className="marketing-section">
-        <h1>Feature set built for API outcomes</h1>
-        <p>
+    <main className="mx-auto w-full max-w-6xl space-y-8 px-4 pb-14 pt-10 sm:px-6 lg:px-8">
+      <section className="space-y-3">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground">Feature set built for API outcomes</h1>
+        <p className="text-sm text-muted-foreground">
           API Contract Guard focuses on one result: preventing production API breakages while keeping your
           pull request workflow fast.
         </p>
-        <div className="feature-anchor-links">
+        <div className="flex flex-wrap gap-2">
           {FEATURE_SECTIONS.map((section) => (
-            <a key={section.id} href={`#${section.id}`}>
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="rounded-full border border-border/70 bg-card px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               {section.title}
             </a>
           ))}
         </div>
       </section>
 
-      <div className="feature-outcome-stack">
+      <div className="space-y-6">
         {FEATURE_SECTIONS.map((section) => (
-          <section key={section.id} className="marketing-section feature-outcome-block" id={section.id}>
-            <div className="feature-outcome-copy">
-              <span className="feature-icon" aria-hidden="true">
+          <section key={section.id} className="grid gap-4 rounded-xl border border-border/70 bg-card p-5 lg:grid-cols-2" id={section.id}>
+            <div className="space-y-2">
+              <span className="inline-flex rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
                 {section.icon}
               </span>
-              <h2>{section.title}</h2>
-              <p>{section.body}</p>
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">{section.title}</h2>
+              <p className="text-sm text-muted-foreground">{section.body}</p>
             </div>
             <MarketingVisualCard
               alt={`${section.title} placeholder visual`}
@@ -100,9 +104,9 @@ export default function FeaturesPage() {
         ))}
       </div>
 
-      <section className="marketing-section">
-        <h2>What&apos;s next</h2>
-        <ul className="legal-list">
+      <section className="space-y-2 rounded-xl border border-border/70 bg-card p-5">
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">What&apos;s next</h2>
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
           <li>OpenAPI enforcement today, with GraphQL and JSON Schema expansion in roadmap sequence.</li>
           <li>Enterprise identity and governance controls including SSO/SAML and expanded audit exports.</li>
           <li>Higher-assurance operational support tiers aligned to API-critical teams.</li>
@@ -111,4 +115,3 @@ export default function FeaturesPage() {
     </main>
   );
 }
-

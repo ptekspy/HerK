@@ -1,3 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+
 import { SectionHeader } from '../../../components/section-header';
 import { PolicyEditor } from '../../../components/policy-editor';
 
@@ -23,29 +25,37 @@ export default async function PoliciesPage({ params }: { params: Promise<{ orgId
   return (
     <>
       <SectionHeader title="Policies" subtitle="Default org policy and service-level overrides" />
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Default policy</h3>
-          <dl className="kv">
-            <div>
-              <dt>Fail on breaking</dt>
-              <dd>{policy.failOnBreaking ? 'Enabled' : 'Disabled'}</dd>
-            </div>
-            <div>
-              <dt>Rule overrides</dt>
-              <dd>{Object.keys(policy.ruleOverrides).length}</dd>
-            </div>
-          </dl>
-        </article>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Default policy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-3 text-sm">
+              <div>
+                <dt className="font-medium text-muted-foreground">Fail on breaking</dt>
+                <dd className="text-foreground">{policy.failOnBreaking ? 'Enabled' : 'Disabled'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-muted-foreground">Rule overrides</dt>
+                <dd className="text-foreground">{Object.keys(policy.ruleOverrides).length}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Policy editor</h3>
-          <PolicyEditor
-            orgId={orgId}
-            initialFailOnBreaking={policy.failOnBreaking}
-            initialRuleOverrides={policy.ruleOverrides ?? {}}
-          />
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Policy editor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PolicyEditor
+              orgId={orgId}
+              initialFailOnBreaking={policy.failOnBreaking}
+              initialRuleOverrides={policy.ruleOverrides ?? {}}
+            />
+          </CardContent>
+        </Card>
       </section>
     </>
   );

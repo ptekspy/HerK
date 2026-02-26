@@ -1,3 +1,5 @@
+import { Badge } from '@herk/ui/base/badge';
+
 export function SectionHeader({
   title,
   subtitle,
@@ -6,12 +8,12 @@ export function SectionHeader({
   subtitle: string;
 }) {
   return (
-    <header className="topbar">
-      <div>
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
-      <span className="badge badge-pass">Live</span>
+      <Badge variant="secondary" className="rounded-full">Live</Badge>
     </header>
   );
 }

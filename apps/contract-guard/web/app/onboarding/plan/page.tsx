@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
 
 import { SubscriptionCheckoutForm } from '../../components/subscription-checkout-form';
 import { apiGet } from '../../../lib/api-server';
@@ -110,95 +114,129 @@ export default async function PlanSelectionPage({
   const checkoutCancelUrl = `${webBase}/onboarding/plan?after=install&orgId=${encodeURIComponent(org.id)}`;
 
   return (
-    <main className="page-wrap plan-pick-shell">
-      <section className="card plan-pick-hero">
-        <p className="plan-pick-kicker">Activation Step</p>
-        <h1>Pick your plan and start protecting pull requests</h1>
-        <p>
-          GitHub is connected for <strong>{org.name}</strong>. Choose a plan to activate your 3-day free trial.
-          Most API teams start on <strong>Growth</strong> for full coverage across core services.
-        </p>
-        <div className="plan-growth-proof">
-          <span>Recommended: Growth</span>
-          <span>Up to 15 services</span>
-          <span>Yearly option includes 2 months free</span>
-        </div>
-      </section>
+    <main className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-14 pt-10 sm:px-6 lg:px-8">
+      <Card>
+        <CardHeader>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Activation Step</p>
+          <CardTitle className="text-4xl">Pick your plan and start protecting pull requests</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            GitHub is connected for <strong>{org.name}</strong>. Choose a plan to activate your 3-day free trial.
+            Most API teams start on <strong>Growth</strong> for full coverage across core services.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1">Recommended: Growth</span>
+            <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1">Up to 15 services</span>
+            <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1">Yearly option includes 2 months free</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {notice ? (
-        <section className={`card plan-pick-notice plan-pick-notice-${notice.tone}`}>
-          <p>{notice.text}</p>
-        </section>
+        <Alert
+          className={
+            notice.tone === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              : notice.tone === 'warning'
+                ? 'border-amber-200 bg-amber-50 text-amber-900'
+                : ''
+          }
+          variant={notice.tone === 'error' ? 'destructive' : 'default'}
+        >
+          {notice.tone === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          <AlertDescription>{notice.text}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <section className="plan-pick-grid">
-        <article className="card plan-tier">
-          <h2>Starter</h2>
-          <p className="plan-tier-price">$49/mo</p>
-          <p>For initial rollout and a focused API surface.</p>
-          <ul>
-            <li>Up to 3 monitored services</li>
-            <li>GitHub PR checks and policy controls</li>
-            <li>In-app notifications and waiver workflows</li>
-          </ul>
-        </article>
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Starter</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-3xl font-semibold text-foreground">$49/mo</p>
+            <p>For initial rollout and a focused API surface.</p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Up to 3 monitored services</li>
+              <li>GitHub PR checks and policy controls</li>
+              <li>In-app notifications and waiver workflows</li>
+            </ul>
+          </CardContent>
+        </Card>
 
-        <article className="card plan-tier plan-tier-growth">
-          <span className="plan-tier-badge">Most popular</span>
-          <h2>Growth</h2>
-          <p className="plan-tier-price">$199/mo</p>
-          <p>Best fit for production teams shipping multiple APIs.</p>
-          <ul>
-            <li>Up to 15 monitored services</li>
-            <li>Full policy controls and team collaboration</li>
-            <li>Email alerts for PR failures</li>
-          </ul>
-        </article>
+        <Card className="border-primary/40 shadow-lg">
+          <CardHeader>
+            <p className="inline-flex w-fit rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Most popular</p>
+            <CardTitle className="text-2xl">Growth</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-3xl font-semibold text-foreground">$199/mo</p>
+            <p>Best fit for production teams shipping multiple APIs.</p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Up to 15 monitored services</li>
+              <li>Full policy controls and team collaboration</li>
+              <li>Email alerts for PR failures</li>
+            </ul>
+          </CardContent>
+        </Card>
 
-        <article className="card plan-tier">
-          <h2>Enterprise</h2>
-          <p className="plan-tier-price">Contact sales</p>
-          <p>For organizations needing unlimited scale and enterprise procurement support.</p>
-          <ul>
-            <li>Unlimited services</li>
-            <li>Priority onboarding and roadmap alignment</li>
-            <li>Governance and SLA planning</li>
-          </ul>
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Enterprise</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p className="text-3xl font-semibold text-foreground">Contact sales</p>
+            <p>For organizations needing unlimited scale and enterprise procurement support.</p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Unlimited services</li>
+              <li>Priority onboarding and roadmap alignment</li>
+              <li>Governance and SLA planning</li>
+            </ul>
+          </CardContent>
+        </Card>
       </section>
 
       {!hasInstallation ? (
-        <section className="card plan-install-warning">
-          <h2>Install GitHub App to continue</h2>
-          <p>Complete GitHub App installation first, then return to choose and activate your plan.</p>
-          {appInstallUrl ? (
-            <a className="btn btn-primary" href={appInstallUrl}>
-              Install or refresh GitHub App
-            </a>
-          ) : (
-            <button className="btn btn-primary" type="button" disabled>
-              GitHub App install unavailable in demo mode
-            </button>
-          )}
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Install GitHub App to continue</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Complete GitHub App installation first, then return to choose and activate your plan.</p>
+            {appInstallUrl ? (
+              <Button asChild>
+                <a href={appInstallUrl}>Install or refresh GitHub App</a>
+              </Button>
+            ) : (
+              <Button type="button" disabled>
+                GitHub App install unavailable in demo mode
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       ) : (
-        <section className="card plan-checkout-card">
-          <h2>Start your 3-day free trial</h2>
-          <p>
-            Card details are collected securely at checkout. Choose monthly or yearly billing and continue to
-            workspace setup immediately after payment authorization.
-          </p>
-          <SubscriptionCheckoutForm
-            orgId={org.id}
-            successUrl={checkoutSuccessUrl}
-            cancelUrl={checkoutCancelUrl}
-            ctaLabel="Continue to secure checkout"
-          />
-          <p className="text-muted mt-0 mb-0">
-            Prefer an enterprise conversation?{' '}
-            <Link href="/pricing">Review enterprise details and contact sales.</Link>
-          </p>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Start your 3-day free trial</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Card details are collected securely at checkout. Choose monthly or yearly billing and continue to
+              workspace setup immediately after payment authorization.
+            </p>
+            <SubscriptionCheckoutForm
+              orgId={org.id}
+              successUrl={checkoutSuccessUrl}
+              cancelUrl={checkoutCancelUrl}
+              ctaLabel="Continue to secure checkout"
+            />
+            <p className="text-sm text-muted-foreground">
+              Prefer an enterprise conversation?{' '}
+              <Link className="text-primary hover:underline" href="/pricing">Review enterprise details and contact sales.</Link>
+            </p>
+          </CardContent>
+        </Card>
       )}
     </main>
   );

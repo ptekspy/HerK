@@ -2,6 +2,26 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
+import { Switch } from '@herk/ui/base/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
 
 import { apiPut } from '../../lib/api';
 
@@ -75,7 +95,7 @@ export function PolicyEditor({
         },
       });
 
-      setOk('policy updated.');
+      setOk('Policy updated.');
       router.refresh();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Request failed');
@@ -85,54 +105,68 @@ export function PolicyEditor({
   };
 
   return (
-    <div className="form-grid">
-      <label className="inline-checkbox">
-        <input
-          type="checkbox"
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-muted/30 p-3">
+        <Switch
+          id="fail-on-breaking"
           checked={failOnBreaking}
-          onChange={(event) => setFailOnBreaking(event.target.checked)}
+          onCheckedChange={(checked) => setFailOnBreaking(Boolean(checked))}
         />
-        Fail check when breaking changes exist
-      </label>
+        <Label htmlFor="fail-on-breaking">Fail check when breaking changes exist</Label>
+      </div>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Rule</th>
-            <th>Severity</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Rule</TableHead>
+            <TableHead>Severity</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {RULES.map((rule) => (
-            <tr key={rule.code}>
-              <td>{rule.title}</td>
-              <td>
-                <select
+            <TableRow key={rule.code}>
+              <TableCell>{rule.title}</TableCell>
+              <TableCell>
+                <Select
                   value={ruleOverrides[rule.code]}
-                  onChange={(event) => {
-                    const value = event.target.value as PolicySeverity;
+                  onValueChange={(value) => {
                     setRuleOverrides((current) => ({
                       ...current,
-                      [rule.code]: value,
+                      [rule.code]: value as PolicySeverity,
                     }));
                   }}
                 >
-                  <option value="OFF">OFF</option>
-                  <option value="WARN">WARN</option>
-                  <option value="BLOCK">BLOCK</option>
-                </select>
-              </td>
-            </tr>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="OFF">OFF</SelectItem>
+                    <SelectItem value="WARN">WARN</SelectItem>
+                    <SelectItem value="BLOCK">BLOCK</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
-      <button className="btn btn-primary" type="button" onClick={onSave} disabled={loading}>
+      <Button type="button" onClick={onSave} disabled={loading}>
         {loading ? 'Saving…' : 'Save policy'}
-      </button>
+      </Button>
 
-      {error && <p className="flash flash-error">{error}</p>}
-      {ok && <p className="flash flash-ok">{ok}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

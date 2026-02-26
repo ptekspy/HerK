@@ -1,3 +1,14 @@
+import { Badge } from '@herk/ui/base/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
+
 import { SectionHeader } from '../../../../components/section-header';
 
 import { apiGet } from '../../../../../lib/api-server';
@@ -18,6 +29,12 @@ interface CheckDetail {
   conclusion: string;
   service: { name: string };
   issues: Issue[];
+}
+
+function conclusionVariant(conclusion: string) {
+  if (conclusion === 'FAIL' || conclusion === 'ERROR') return 'destructive' as const;
+  if (conclusion === 'WARN') return 'outline' as const;
+  return 'secondary' as const;
 }
 
 export default async function CheckDetailPage({
@@ -44,34 +61,42 @@ export default async function CheckDetailPage({
         subtitle={`PR #${check.pullRequestNumber} · ${check.service.name}`}
       />
 
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Conclusion</h3>
-          <p>{check.conclusion}</p>
-          <p>{check.summary}</p>
-        </article>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Conclusion</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Badge variant={conclusionVariant(check.conclusion)}>{check.conclusion}</Badge>
+            <p className="text-sm text-muted-foreground">{check.summary}</p>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Issues</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Rule</th>
-                <th>Severity</th>
-                <th>Waived</th>
-              </tr>
-            </thead>
-            <tbody>
-              {check.issues.map((issue) => (
-                <tr key={issue.id}>
-                  <td>{issue.ruleCode}</td>
-                  <td>{issue.severity}</td>
-                  <td>{issue.isWaived ? 'Yes' : 'No'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Issues</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rule</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Waived</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {check.issues.map((issue) => (
+                  <TableRow key={issue.id}>
+                    <TableCell>{issue.ruleCode}</TableCell>
+                    <TableCell>{issue.severity}</TableCell>
+                    <TableCell>{issue.isWaived ? 'Yes' : 'No'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </section>
     </>
   );

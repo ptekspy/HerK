@@ -3,8 +3,8 @@ import localFont from 'next/font/local';
 
 import { SiteFooter } from './components/site-footer';
 import { SiteHeader } from './components/site-header';
-import "@herk/ui/styles.css";
-import "./globals.css";
+import '@herk/ui/styles.css';
+import './globals.css';
 import { getOptionalSession, getPrimaryOrg, toMarketingNavState } from '../lib/site-auth';
 
 const geistSans = localFont({
@@ -34,9 +34,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <div className="site-frame">
+        <div className="flex min-h-screen flex-col">
           <SiteHeader navState={navState} />
-          <div className="site-content">{children}</div>
+          <div className="flex-1">{children}</div>
           <SiteFooter />
         </div>
       </body>

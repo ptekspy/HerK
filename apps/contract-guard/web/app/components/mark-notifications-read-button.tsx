@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
 
 import { apiPatch } from '../../lib/api';
 
@@ -37,16 +40,21 @@ export function MarkNotificationsReadButton({
   };
 
   return (
-    <div className="stack-xs">
-      <button
-        className="btn btn-secondary"
+    <div className="space-y-2">
+      <Button
         type="button"
+        variant="outline"
         onClick={onMarkRead}
         disabled={disabled || loading}
       >
         {loading ? 'Saving…' : label}
-      </button>
-      {error && <p className="flash flash-error">{error}</p>}
+      </Button>
+      {error ? (
+        <Alert variant="destructive" className="py-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

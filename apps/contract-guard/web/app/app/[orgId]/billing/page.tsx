@@ -1,3 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+
 import { SectionHeader } from '../../../components/section-header';
 import { BillingActions } from '../../../components/billing-actions';
 
@@ -26,40 +28,48 @@ export default async function BillingPage({ params }: { params: Promise<{ orgId:
     <>
       <SectionHeader title="Billing" subtitle="Stripe subscriptions with sandbox support" />
 
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Current subscription</h3>
-          <dl className="kv">
-            <div>
-              <dt>Plan</dt>
-              <dd>{billing.plan}</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{billing.status ?? 'Not subscribed'}</dd>
-            </div>
-            <div>
-              <dt>Current period end</dt>
-              <dd>{billing.currentPeriodEnd ?? 'N/A'}</dd>
-            </div>
-            <div>
-              <dt>Service usage</dt>
-              <dd>
-                {billing.serviceCount}
-                {billing.serviceLimit !== null ? ` / ${billing.serviceLimit}` : ' / unlimited'}
-              </dd>
-            </div>
-          </dl>
-        </article>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Current subscription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-3 text-sm">
+              <div>
+                <dt className="font-medium text-muted-foreground">Plan</dt>
+                <dd className="text-foreground">{billing.plan}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-muted-foreground">Status</dt>
+                <dd className="text-foreground">{billing.status ?? 'Not subscribed'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-muted-foreground">Current period end</dt>
+                <dd className="text-foreground">{billing.currentPeriodEnd ?? 'N/A'}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-muted-foreground">Service usage</dt>
+                <dd className="text-foreground">
+                  {billing.serviceCount}
+                  {billing.serviceLimit !== null ? ` / ${billing.serviceLimit}` : ' / unlimited'}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Checkout and portal</h3>
-          <p>
-            Choose a plan to start your 3-day trial (card required), then use the customer portal for
-            upgrades, downgrades, and cancellations.
-          </p>
-          <BillingActions orgId={orgId} />
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Checkout and portal</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Choose a plan to start your 3-day trial (card required), then use the customer portal for
+              upgrades, downgrades, and cancellations.
+            </p>
+            <BillingActions orgId={orgId} />
+          </CardContent>
+        </Card>
       </section>
     </>
   );

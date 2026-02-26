@@ -1,8 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@herk/ui/base/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@herk/ui/base/sheet';
 
 import type { SiteLink } from '../content/site';
 
@@ -24,76 +32,64 @@ export function MobileNavDrawer({
   billingHref,
 }: MobileNavDrawerProps) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const panelId = 'mobile-site-nav-panel';
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (open) {
-      closeButtonRef.current?.focus();
-    }
-  }, [open]);
 
   return (
-    <div className="mobile-nav">
-      <button
-        className="mobile-nav-toggle"
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((value) => !value)}
-      >
-        Menu
-      </button>
+    <div className="md:hidden">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm" className="rounded-full">
+            <Menu className="h-4 w-4" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="grid grid-rows-[auto_1fr_auto] gap-6">
+          <SheetHeader className="flex-row items-center justify-between">
+            <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+              <BrandLogo variant="square" className="w-8" />
+              Navigation
+            </SheetTitle>
+          </SheetHeader>
 
-      {open ? <button className="mobile-nav-backdrop" type="button" aria-label="Close menu" onClick={() => setOpen(false)} /> : null}
+          <SiteNav
+            links={links}
+            className="w-full items-start justify-start"
+            onNavigate={() => setOpen(false)}
+          />
 
-      <aside className={`mobile-nav-panel ${open ? 'is-open' : ''}`} id={panelId}>
-        <div className="mobile-nav-header">
-          <div className="mobile-nav-brand">
-            <BrandLogo variant="square" />
-            <strong>Navigation</strong>
+          <div className="grid gap-3">
+            {isAuthenticated ? (
+              <>
+                <Button asChild variant="outline">
+                  <Link href={workspaceHref} onClick={() => setOpen(false)}>
+                    Workspace
+                  </Link>
+                </Button>
+                {billingHref ? (
+                  <Button asChild variant="outline">
+                    <Link href={billingHref} onClick={() => setOpen(false)}>
+                      Billing
+                    </Link>
+                  </Button>
+                ) : null}
+                <LogoutButton className="justify-start" />
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline">
+                  <Link href="/onboarding" onClick={() => setOpen(false)}>
+                    Sign in
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/onboarding" onClick={() => setOpen(false)}>
+                    Start free trial
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Close navigation"
-          >
-            Close
-          </button>
-        </div>
-        <SiteNav links={links} className="mobile-site-nav-links" onNavigate={() => setOpen(false)} />
-
-        <div className="mobile-site-nav-actions">
-          {isAuthenticated ? (
-            <>
-              <Link className="btn btn-secondary" href={workspaceHref}>
-                Workspace
-              </Link>
-              {billingHref ? (
-                <Link className="btn btn-secondary" href={billingHref}>
-                  Billing
-                </Link>
-              ) : null}
-              <LogoutButton className="btn btn-ghost" />
-            </>
-          ) : (
-            <>
-              <Link className="btn btn-secondary" href="/onboarding">
-                Sign in
-              </Link>
-              <Link className="btn btn-primary" href="/onboarding">
-                Start free trial
-              </Link>
-            </>
-          )}
-        </div>
-      </aside>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Input } from '@herk/ui/base/input';
 
 import type { HelpCategoryConfig, HelpFaqItem } from '../content/help';
 
@@ -27,15 +28,19 @@ export function HelpSearch({ categories, faqItems }: HelpSearchProps) {
   }, [faqItems, normalizedQuery]);
 
   return (
-    <section className="marketing-section help-search-shell" id="help-search">
-      <div className="help-search-header">
-        <h2>Search help articles</h2>
-        <p>Find setup guidance, policy behavior, troubleshooting steps, and billing answers.</p>
+    <section className="space-y-6" id="help-search">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Search help articles</h2>
+        <p className="text-sm text-muted-foreground">
+          Find setup guidance, policy behavior, troubleshooting steps, and billing answers.
+        </p>
       </div>
 
-      <label className="help-search-input-wrap" htmlFor="help-search-input">
-        <span>Search by keyword</span>
-        <input
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="help-search-input">
+          Search by keyword
+        </label>
+        <Input
           id="help-search-input"
           name="help-search-input"
           placeholder="Try: callback, repositories, waivers, billing"
@@ -43,17 +48,21 @@ export function HelpSearch({ categories, faqItems }: HelpSearchProps) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-      </label>
+      </div>
 
-      <nav aria-label="Help categories" className="help-category-links">
+      <nav aria-label="Help categories" className="flex flex-wrap gap-2">
         {categories.map((category) => (
-          <a key={category.id} href={`#help-${category.id}`}>
+          <a
+            key={category.id}
+            href={`#help-${category.id}`}
+            className="rounded-full border border-border/70 bg-card px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
             {category.title}
           </a>
         ))}
       </nav>
 
-      <div className="help-category-sections">
+      <div className="space-y-6">
         {categories.map((category) => {
           const items = filteredItems.filter((item) => item.category === category.id);
           if (items.length === 0) {
@@ -61,16 +70,16 @@ export function HelpSearch({ categories, faqItems }: HelpSearchProps) {
           }
 
           return (
-            <section key={category.id} id={`help-${category.id}`} className="help-category-section">
-              <header>
-                <h3>{category.title}</h3>
-                <p>{category.description}</p>
+            <section key={category.id} id={`help-${category.id}`} className="space-y-3 rounded-xl border border-border/70 bg-card p-5">
+              <header className="space-y-1">
+                <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
+                <p className="text-sm text-muted-foreground">{category.description}</p>
               </header>
-              <div className="faq-grid">
+              <div className="grid gap-3 md:grid-cols-2">
                 {items.map((item) => (
-                  <article key={item.id}>
-                    <h4>{item.question}</h4>
-                    <p>{item.answer}</p>
+                  <article key={item.id} className="space-y-1 rounded-lg border border-border/60 bg-muted/20 p-3">
+                    <h4 className="text-sm font-semibold text-foreground">{item.question}</h4>
+                    <p className="text-sm text-muted-foreground">{item.answer}</p>
                   </article>
                 ))}
               </div>
@@ -81,4 +90,3 @@ export function HelpSearch({ categories, faqItems }: HelpSearchProps) {
     </section>
   );
 }
-

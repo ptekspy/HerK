@@ -2,6 +2,12 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Checkbox } from '@herk/ui/base/checkbox';
+import { Input } from '@herk/ui/base/input';
+import { Label } from '@herk/ui/base/label';
 
 import { apiPost } from '../../lib/api';
 
@@ -37,8 +43,8 @@ export function InstallationSyncForm({ orgId }: { orgId: string }) {
       );
       setOk(
         typeof result.syncedRepositories === 'number'
-          ? `installation synced (${result.syncedRepositories} repositories).`
-          : 'installation synced.',
+          ? `Installation synced (${result.syncedRepositories} repositories).`
+          : 'Installation synced.',
       );
       router.refresh();
     } catch (syncError) {
@@ -49,43 +55,57 @@ export function InstallationSyncForm({ orgId }: { orgId: string }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-grid">
-      <label>
-        GitHub installation ID
-        <input
-          value={installationId}
-          onChange={(event) => setInstallationId(event.target.value)}
-          placeholder="12345678"
-          inputMode="numeric"
-          required
-        />
-      </label>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="installation-id">GitHub installation ID</Label>
+          <Input
+            id="installation-id"
+            value={installationId}
+            onChange={(event) => setInstallationId(event.target.value)}
+            placeholder="12345678"
+            inputMode="numeric"
+            required
+          />
+        </div>
 
-      <label>
-        Account login
-        <input
-          value={accountLogin}
-          onChange={(event) => setAccountLogin(event.target.value)}
-          placeholder="acme"
-          required
-        />
-      </label>
+        <div className="space-y-2">
+          <Label htmlFor="installation-login">Account login</Label>
+          <Input
+            id="installation-login"
+            value={accountLogin}
+            onChange={(event) => setAccountLogin(event.target.value)}
+            placeholder="acme"
+            required
+          />
+        </div>
 
-      <label className="inline-checkbox">
-        <input
-          type="checkbox"
-          checked={syncRepositories}
-          onChange={(event) => setSyncRepositories(event.target.checked)}
-        />
-        Sync repositories after installation upsert
-      </label>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <Checkbox
+            id="sync-repositories"
+            checked={syncRepositories}
+            onCheckedChange={(checked) => setSyncRepositories(Boolean(checked))}
+          />
+          <Label htmlFor="sync-repositories">Sync repositories after installation upsert</Label>
+        </div>
+      </div>
 
-      <button className="btn btn-primary" type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         {loading ? 'Syncing…' : 'Sync installation'}
-      </button>
+      </Button>
 
-      {error && <p className="flash flash-error">{error}</p>}
-      {ok && <p className="flash flash-ok">{ok}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {ok ? (
+        <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{ok}</AlertDescription>
+        </Alert>
+      ) : null}
     </form>
   );
 }

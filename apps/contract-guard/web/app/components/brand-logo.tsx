@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { cn } from '@herk/utils';
 
 type BrandLogoVariant = 'long' | 'square';
 
@@ -14,11 +15,13 @@ const LOGO_BY_VARIANT = {
     src: '/logo-long.png',
     width: 1013,
     height: 233,
+    className: 'w-[170px] md:w-[220px]',
   },
   square: {
     src: '/logo-square.png',
     width: 235,
     height: 233,
+    className: 'w-9',
   },
 } as const;
 
@@ -29,18 +32,10 @@ export function BrandLogo({
   alt = 'API Contract Guard',
 }: BrandLogoProps) {
   const config = LOGO_BY_VARIANT[variant];
-  const rootClassName = className ? `brand-logo brand-logo-${variant} ${className}` : `brand-logo brand-logo-${variant}`;
 
   return (
-    <span className={rootClassName}>
-      <Image
-        alt={alt}
-        className="brand-logo-image"
-        height={config.height}
-        priority={priority}
-        src={config.src}
-        width={config.width}
-      />
+    <span className={cn('inline-flex items-center', config.className, className)}>
+      <Image alt={alt} className="h-auto w-full" height={config.height} priority={priority} src={config.src} width={config.width} />
     </span>
   );
 }

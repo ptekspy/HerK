@@ -1,6 +1,17 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Label } from '@herk/ui/base/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiPost } from '../../lib/api';
 
@@ -58,40 +69,52 @@ export function SubscriptionCheckoutForm({
   };
 
   return (
-    <div className="form-grid mt-form-offset">
-      <label htmlFor="plan-select">
-        Plan
-        <select
-          id="plan-select"
-          value={plan}
-          onChange={(event) => setPlan(event.target.value as BillingPlan)}
-          disabled={loading}
-        >
-          <option value="STARTER">Starter</option>
-          <option value="GROWTH">Growth</option>
-          <option value="ENTERPRISE">Enterprise</option>
-        </select>
-      </label>
-      <label htmlFor="billing-cycle-select">
-        Billing cycle
-        <select
-          id="billing-cycle-select"
-          value={billingCycle}
-          onChange={(event) => setBillingCycle(event.target.value as BillingCycle)}
-          disabled={loading}
-        >
-          <option value="MONTHLY">Monthly</option>
-          <option value="YEARLY">Yearly (2 months free)</option>
-        </select>
-      </label>
-      <p className="text-muted mt-0 mb-0">{helpText}</p>
-      <button className="btn btn-primary" type="button" onClick={openCheckout} disabled={loading}>
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Plan</Label>
+          <Select value={plan} onValueChange={(value) => setPlan(value as BillingPlan)} disabled={loading}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="STARTER">Starter</SelectItem>
+              <SelectItem value="GROWTH">Growth</SelectItem>
+              <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Billing cycle</Label>
+          <Select
+            value={billingCycle}
+            onValueChange={(value) => setBillingCycle(value as BillingCycle)}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MONTHLY">Monthly</SelectItem>
+              <SelectItem value="YEARLY">Yearly (2 months free)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <p className="text-sm text-muted-foreground">{helpText}</p>
+      <Button type="button" onClick={openCheckout} disabled={loading}>
         {loading ? 'Opening checkout…' : ctaLabel}
-      </button>
-      <p className="text-muted mt-0 mb-0">
+      </Button>
+      <p className="text-sm text-muted-foreground">
         3-day free trial. Card details are collected at checkout.
       </p>
-      {error && <p className="flash flash-error">{error}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

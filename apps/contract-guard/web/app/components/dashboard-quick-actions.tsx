@@ -1,29 +1,38 @@
+import { Button } from '@herk/ui/base/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+
 interface DashboardQuickActionsProps {
   orgId: string;
 }
 
 export function DashboardQuickActions({ orgId }: DashboardQuickActionsProps) {
   return (
-    <section className="card dashboard-quick-actions">
-      <h3>Quick actions</h3>
-      <p>Jump to the actions needed most during setup and daily operations.</p>
-      <div className="cta-row mt-3">
-        <a className="btn btn-secondary" href={`/app/${orgId}/repos#github-sync`}>
-          Refresh repositories
-        </a>
-        <a className="btn btn-secondary" href={`/app/${orgId}/services#create-service`}>
-          Create service
-        </a>
-        <a className="btn btn-secondary" href={`/app/${orgId}/policies`}>
-          Edit policy
-        </a>
-        <a className="btn btn-secondary" href={`/app/${orgId}/notifications`}>
-          Notification settings
-        </a>
-        <a className="btn btn-secondary" href={`/app/${orgId}/billing`}>
-          Billing
-        </a>
-      </div>
-    </section>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Quick actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Jump to the actions needed most during setup and daily operations.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href={`/app/${orgId}/repos#github-sync`}>Refresh repositories</a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href={`/app/${orgId}/services#create-service`}>Create service</a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href={`/app/${orgId}/policies`}>Edit policy</a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href={`/app/${orgId}/notifications`}>Notification settings</a>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <a href={`/app/${orgId}/billing`}>Billing</a>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,3 +1,13 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
+
 import { SectionHeader } from '../../../components/section-header';
 import { TeamInviteForm } from '../../../components/team-invite-form';
 import { TeamMemberActions } from '../../../components/team-member-actions';
@@ -23,41 +33,49 @@ export default async function TeamPage({ params }: { params: Promise<{ orgId: st
     <>
       <SectionHeader title="Team" subtitle="Owner/Admin/Member/Viewer role management" />
 
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Members</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td>{member.user.name ?? 'N/A'}</td>
-                  <td>{member.user.email ?? 'N/A'}</td>
-                  <td>{member.role}</td>
-                  <td>
-                    <TeamMemberActions
-                      orgId={orgId}
-                      memberId={member.id}
-                      initialRole={member.role}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Members</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell>{member.user.name ?? 'N/A'}</TableCell>
+                    <TableCell>{member.user.email ?? 'N/A'}</TableCell>
+                    <TableCell>{member.role}</TableCell>
+                    <TableCell>
+                      <TeamMemberActions
+                        orgId={orgId}
+                        memberId={member.id}
+                        initialRole={member.role}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Invite member</h3>
-          <TeamInviteForm orgId={orgId} />
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Invite member</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TeamInviteForm orgId={orgId} />
+          </CardContent>
+        </Card>
       </section>
     </>
   );

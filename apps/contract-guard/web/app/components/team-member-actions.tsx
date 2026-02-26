@@ -2,6 +2,27 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@herk/ui/base/alert-dialog';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@herk/ui/base/select';
 
 import { apiDelete, apiPatch } from '../../lib/api';
 
@@ -38,11 +59,6 @@ export function TeamMemberActions({ orgId, memberId, initialRole }: TeamMemberAc
 
   const onRemove = async () => {
     setError(null);
-    const confirmed = window.confirm('Remove this member from the organization?');
-    if (!confirmed) {
-      return;
-    }
-
     setLoading('remove');
     try {
       await apiDelete(`/v1/orgs/${orgId}/members/${memberId}`);
@@ -55,27 +71,57 @@ export function TeamMemberActions({ orgId, memberId, initialRole }: TeamMemberAc
   };
 
   return (
-    <div className="form-grid mt-0">
-      <div className="inline-row-sm">
-        <select
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
           value={role}
-          onChange={(event) => setRole(event.target.value as MemberRole)}
+          onValueChange={(value) => setRole(value as MemberRole)}
           disabled={loading !== null}
         >
-          {MEMBER_ROLES.map((memberRole) => (
-            <option key={memberRole} value={memberRole}>
-              {memberRole}
-            </option>
-          ))}
-        </select>
-        <button className="btn btn-secondary" type="button" onClick={onSaveRole} disabled={loading !== null}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {MEMBER_ROLES.map((memberRole) => (
+              <SelectItem key={memberRole} value={memberRole}>
+                {memberRole}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button type="button" variant="outline" onClick={onSaveRole} disabled={loading !== null}>
           {loading === 'save' ? 'Saving…' : 'Save'}
-        </button>
-        <button className="btn btn-secondary" type="button" onClick={onRemove} disabled={loading !== null}>
-          {loading === 'remove' ? 'Removing…' : 'Remove'}
-        </button>
+        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="outline" disabled={loading !== null}>
+              {loading === 'remove' ? 'Removing…' : 'Remove'}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove member</AlertDialogTitle>
+              <AlertDialogDescription>
+                Remove this member from the organization?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={loading !== null}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={onRemove} disabled={loading !== null}>
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-      {error && <p className="flash flash-error">{error}</p>}
+      {error ? (
+        <Alert variant="destructive" className="py-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

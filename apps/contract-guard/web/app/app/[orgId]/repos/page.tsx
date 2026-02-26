@@ -1,3 +1,16 @@
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@herk/ui/base/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@herk/ui/base/table';
+
 import { SectionHeader } from '../../../components/section-header';
 import { CreateRepoForm } from '../../../components/create-repo-form';
 import { RefreshRepositoriesButton } from '../../../components/refresh-repositories-button';
@@ -50,89 +63,104 @@ export default async function ReposPage({
     <>
       <SectionHeader title="Repositories" subtitle="Map GitHub repositories to API Contract Guard services" />
 
-      <section className="grid">
-        <article className="card card-grid-6">
-          <h3>Connected repositories</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Repository</th>
-                <th>Default branch</th>
-                <th>Services</th>
-              </tr>
-            </thead>
-            <tbody>
-              {repos.map((repo) => (
-                <tr key={repo.id}>
-                  <td>{repo.fullName}</td>
-                  <td>{repo.defaultBranch}</td>
-                  <td>{repo._count.services}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Connected repositories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Repository</TableHead>
+                  <TableHead>Default branch</TableHead>
+                  <TableHead>Services</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {repos.map((repo) => (
+                  <TableRow key={repo.id}>
+                    <TableCell>{repo.fullName}</TableCell>
+                    <TableCell>{repo.defaultBranch}</TableCell>
+                    <TableCell>{repo._count.services}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6" id="github-sync">
-          <h3>GitHub App</h3>
-          <p>Refresh repositories from your connected GitHub App installation.</p>
+        <Card id="github-sync">
+          <CardHeader>
+            <CardTitle className="text-lg">GitHub App</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">Refresh repositories from your connected GitHub App installation.</p>
 
-          <div className="cta-row mt-3">
-            <a className="btn btn-secondary" href={githubAppInstallUrl}>
-              Refresh GitHub App permissions
-            </a>
-          </div>
+            <Button asChild variant="outline">
+              <a href={githubAppInstallUrl}>Refresh GitHub App permissions</a>
+            </Button>
 
-          {installStatus === 'ok' && (
-            <p className="flash flash-ok mt-3">
-              GitHub App installation connected.
-            </p>
-          )}
-          {installStatus === 'pending' && (
-            <p className="flash mt-3">
-              GitHub App installation is pending approval.
-            </p>
-          )}
-          {installStatus === 'error' && (
-            <p className="flash flash-error mt-3">
-              Installation callback failed{installStatusReason ? ` (${installStatusReason})` : ''}.
-            </p>
-          )}
-          <div className="mt-4" id="refresh-repositories">
-            <RefreshRepositoriesButton
-              orgId={orgId}
-              installations={installations.map((installation) => ({
-                installationId: installation.installationId,
-                accountLogin: installation.accountLogin,
-              }))}
-            />
-          </div>
+            {installStatus === 'ok' ? (
+              <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>GitHub App installation connected.</AlertDescription>
+              </Alert>
+            ) : null}
+            {installStatus === 'pending' ? (
+              <Alert className="border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>GitHub App installation is pending approval.</AlertDescription>
+              </Alert>
+            ) : null}
+            {installStatus === 'error' ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Installation callback failed{installStatusReason ? ` (${installStatusReason})` : ''}.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div id="refresh-repositories">
+              <RefreshRepositoriesButton
+                orgId={orgId}
+                installations={installations.map((installation) => ({
+                  installationId: installation.installationId,
+                  accountLogin: installation.accountLogin,
+                }))}
+              />
+            </div>
 
-          <table className="table mt-4">
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Installation ID</th>
-                <th>Repositories</th>
-              </tr>
-            </thead>
-            <tbody>
-              {installations.map((installation) => (
-                <tr key={installation.id}>
-                  <td>{installation.accountLogin}</td>
-                  <td>{installation.installationId}</td>
-                  <td>{installation._count.repositories}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </article>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Account</TableHead>
+                  <TableHead>Installation ID</TableHead>
+                  <TableHead>Repositories</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {installations.map((installation) => (
+                  <TableRow key={installation.id}>
+                    <TableCell>{installation.accountLogin}</TableCell>
+                    <TableCell>{installation.installationId}</TableCell>
+                    <TableCell>{installation._count.repositories}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <article className="card card-grid-6">
-          <h3>Manual repository mapping</h3>
-          <p>Use this when a repository is not yet in the synced list.</p>
-          <CreateRepoForm orgId={orgId} installations={installations} />
-        </article>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Manual repository mapping</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Use this when a repository is not yet in the synced list.</p>
+            <CreateRepoForm orgId={orgId} installations={installations} />
+          </CardContent>
+        </Card>
       </section>
     </>
   );

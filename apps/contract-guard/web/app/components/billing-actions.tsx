@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@herk/ui/base/alert';
+import { Button } from '@herk/ui/base/button';
 
 import { apiPost } from '../../lib/api';
 import { SubscriptionCheckoutForm } from './subscription-checkout-form';
-import { Button } from '@herk/ui/base/button';
 
 export function BillingActions({ orgId }: { orgId: string }) {
   const [loading, setLoading] = useState<'portal' | null>(null);
@@ -33,12 +35,17 @@ export function BillingActions({ orgId }: { orgId: string }) {
   };
 
   return (
-    <div className="form-grid mt-form-offset">
+    <div className="space-y-4">
       <SubscriptionCheckoutForm orgId={orgId} ctaLabel="Choose plan and checkout" />
-      <Button className="btn btn-secondary" type="button" onClick={openPortal} disabled={loading !== null}>
+      <Button type="button" variant="outline" onClick={openPortal} disabled={loading !== null}>
         {loading === 'portal' ? 'Opening portal…' : 'Open customer portal'}
       </Button>
-      {error && <p className="flash flash-error">{error}</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

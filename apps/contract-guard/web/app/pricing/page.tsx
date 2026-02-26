@@ -16,10 +16,10 @@ export default async function PricingPage() {
   const salesEmail = getSalesEmail();
 
   return (
-    <main className="marketing-main page-wrap">
-      <section className="marketing-section">
-        <h1>Pricing</h1>
-        <p>
+    <main className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-14 pt-10 sm:px-6 lg:px-8">
+      <section className="space-y-2">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground">Pricing</h1>
+        <p className="text-sm text-muted-foreground">
           Select the package that matches your API footprint. Yearly billing includes the equivalent of
           2 months free.
         </p>
