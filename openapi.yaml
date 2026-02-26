@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: ContractGuard Test API
+  title: API Contract Guard Test API
   version: 1.0.0
-  description: Baseline OpenAPI spec for testing ContractGuard PR checks.
+  description: Baseline OpenAPI spec for testing API Contract Guard PR checks.
 servers:
   - url: https://api.example.com
 paths:

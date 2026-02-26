@@ -20,7 +20,7 @@ export function OrgNav({ orgId }: { orgId: string }) {
 
   return (
     <nav className="side-nav">
-      <div className="brand">ContractGuard</div>
+      <div className="brand">API Contract Guard</div>
       {navItems.map((item) => {
         const href = `/app/${orgId}/${item.href}`;
         const active = pathname === href;

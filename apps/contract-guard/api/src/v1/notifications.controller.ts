@@ -4,6 +4,7 @@ import { CurrentUserContext } from '../common/auth/current-user.decorator';
 import { SessionGuard } from '../common/auth/session.guard';
 import type { CurrentUser } from '../common/auth/current-user.type';
 
+import { UpdateNotificationPreferencesDto } from './dto/notification-preferences.dto';
 import { MarkNotificationsReadDto } from './dto/notifications.dto';
 import { V1Service } from './v1.service';
 
@@ -17,6 +18,11 @@ export class NotificationsController {
     return this.v1Service.listNotifications(user.id, orgId);
   }
 
+  @Get('preferences')
+  async preferences(@CurrentUserContext() user: CurrentUser, @Param('orgId') orgId: string) {
+    return this.v1Service.getNotificationPreferences(user.id, orgId);
+  }
+
   @Patch()
   async markRead(
     @CurrentUserContext() user: CurrentUser,
@@ -24,5 +30,14 @@ export class NotificationsController {
     @Body() dto: MarkNotificationsReadDto,
   ) {
     return this.v1Service.markNotificationsRead(user.id, orgId, dto);
+  }
+
+  @Patch('preferences')
+  async updatePreferences(
+    @CurrentUserContext() user: CurrentUser,
+    @Param('orgId') orgId: string,
+    @Body() dto: UpdateNotificationPreferencesDto,
+  ) {
+    return this.v1Service.updateNotificationPreferences(user.id, orgId, dto);
   }
 }

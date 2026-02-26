@@ -12,27 +12,13 @@ export class NotificationsService {
     this.resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
   }
 
-  async createCheckNotification(args: {
+  private async sendNotificationEmails(args: {
     orgId: string;
+    notificationId: string;
     title: string;
     body: string;
-    link: string;
-    severity: 'PASS' | 'WARN' | 'FAIL' | 'ERROR';
+    link?: string | null;
   }) {
-    if (args.severity === 'PASS') {
-      return;
-    }
-
-    const notification = await this.prisma.notification.create({
-      data: {
-        orgId: args.orgId,
-        kind: `CHECK_${args.severity}`,
-        title: args.title,
-        body: args.body,
-        link: args.link,
-      },
-    });
-
     const members = await this.prisma.organizationMember.findMany({
       where: { orgId: args.orgId },
       include: { user: true },
@@ -49,7 +35,7 @@ export class NotificationsService {
     await this.prisma.emailDelivery.createMany({
       data: emails.map((email) => ({
         orgId: args.orgId,
-        notificationId: notification.id,
+        notificationId: args.notificationId,
         recipientEmail: email,
         subject: args.title,
         provider: 'RESEND',
@@ -58,10 +44,11 @@ export class NotificationsService {
     });
 
     if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY is not set. Email deliveries are recorded as pending.');
       return;
     }
 
-    const from = process.env.RESEND_FROM_EMAIL ?? 'ContractGuard <alerts@contractguard.local>';
+    const from = process.env.RESEND_FROM_EMAIL ?? 'API Contract Guard <alerts@contractguard.local>';
 
     for (const recipientEmail of emails) {
       try {
@@ -69,13 +56,15 @@ export class NotificationsService {
           from,
           to: recipientEmail,
           subject: args.title,
-          html: `<p>${args.body}</p><p><a href="${args.link}">View details</a></p>`,
+          html: `<p>${args.body}</p>${
+            args.link ? `<p><a href="${args.link}">View details</a></p>` : ''
+          }`,
         });
 
         await this.prisma.emailDelivery.updateMany({
           where: {
             orgId: args.orgId,
-            notificationId: notification.id,
+            notificationId: args.notificationId,
             recipientEmail,
           },
           data: {
@@ -91,7 +80,7 @@ export class NotificationsService {
         await this.prisma.emailDelivery.updateMany({
           where: {
             orgId: args.orgId,
-            notificationId: notification.id,
+            notificationId: args.notificationId,
             recipientEmail,
           },
           data: {
@@ -101,5 +90,74 @@ export class NotificationsService {
         });
       }
     }
+  }
+
+  async createOrgNotification(args: {
+    orgId: string;
+    kind: string;
+    title: string;
+    body: string;
+    link?: string | null;
+  }) {
+    const notification = await this.prisma.notification.create({
+      data: {
+        orgId: args.orgId,
+        kind: args.kind,
+        title: args.title,
+        body: args.body,
+        link: args.link ?? null,
+      },
+    });
+
+    await this.sendNotificationEmails({
+      orgId: args.orgId,
+      notificationId: notification.id,
+      title: args.title,
+      body: args.body,
+      link: args.link,
+    });
+  }
+
+  async createCheckNotification(args: {
+    orgId: string;
+    title: string;
+    body: string;
+    link: string;
+    severity: 'PASS' | 'WARN' | 'FAIL' | 'ERROR';
+  }) {
+    if (args.severity === 'PASS') {
+      return;
+    }
+
+    const org = await this.prisma.organization.findUnique({
+      where: {
+        id: args.orgId,
+      },
+      select: {
+        emailOnPrFailure: true,
+      },
+    });
+
+    const notification = await this.prisma.notification.create({
+      data: {
+        orgId: args.orgId,
+        kind: `CHECK_${args.severity}`,
+        title: args.title,
+        body: args.body,
+        link: args.link,
+      },
+    });
+
+    if (!org?.emailOnPrFailure) {
+      return;
+    }
+
+    await this.sendNotificationEmails({
+      orgId: args.orgId,
+      notificationId: notification.id,
+      title: args.title,
+      body: args.body,
+      link: args.link,
+    });
   }
 }

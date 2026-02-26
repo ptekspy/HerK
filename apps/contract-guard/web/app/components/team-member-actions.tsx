@@ -55,8 +55,8 @@ export function TeamMemberActions({ orgId, memberId, initialRole }: TeamMemberAc
   };
 
   return (
-    <div className="form-grid" style={{ marginTop: 0 }}>
-      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+    <div className="form-grid mt-0">
+      <div className="inline-row-sm">
         <select
           value={role}
           onChange={(event) => setRole(event.target.value as MemberRole)}

@@ -1,7 +1,12 @@
 import { cookies } from 'next/headers';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:4001';
+function getServerApiBaseUrl() {
+  return (
+    process.env.INTERNAL_API_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    'http://localhost:4001'
+  );
+}
 
 const demoEmail = process.env.NEXT_PUBLIC_DEMO_USER_EMAIL;
 const demoName = process.env.NEXT_PUBLIC_DEMO_USER_NAME;
@@ -29,7 +34,7 @@ export async function apiGet<T>(path: string): Promise<T> {
     headers.cookie = cookieHeader;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${getServerApiBaseUrl()}${path}`, {
     headers,
     cache: 'no-store',
     credentials: 'include',

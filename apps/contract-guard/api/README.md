@@ -1,6 +1,6 @@
-# ContractGuard API (NestJS)
+# API Contract Guard API (NestJS)
 
-HTTP API + webhook ingress for ContractGuard.
+HTTP API + webhook ingress for API Contract Guard.
 
 ## Responsibilities
 
@@ -22,7 +22,7 @@ Default port: `4001`
 
 - OAuth mode: set `GITHUB_OAUTH_CLIENT_ID`, `GITHUB_OAUTH_CLIENT_SECRET`, and (optionally) `GITHUB_OAUTH_REDIRECT_URI`.
 - GitHub App install flow: set `GITHUB_APP_SLUG` (or `GITHUB_APP_INSTALL_URL`) and configure the app setup URL to `.../auth/github/app/install/callback`.
-- Session cookies: configure `SESSION_COOKIE_NAME`, `SESSION_TTL_DAYS`, `FRONTEND_URL`, and `AUTH_ALLOWED_REDIRECT_ORIGINS`.
+- Session cookies: configure `SESSION_COOKIE_NAME`, `SESSION_TTL_DAYS`, `FRONTEND_URL`, and `AUTH_ALLOWED_REDIRECT_ORIGINS` (comma-separated for multi-domain setups).
 - Demo header mode: set `ALLOW_HEADER_AUTH=true` and send `x-user-email` (plus optional `x-user-name`).
 
 ## Key Routes

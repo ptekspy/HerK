@@ -1,6 +1,6 @@
-# ContractGuard Monorepo
+# API Contract Guard Monorepo
 
-ContractGuard prevents breaking API changes from reaching production by diffing OpenAPI contracts on pull requests and enforcing policy-driven outcomes.
+API Contract Guard prevents breaking API changes from reaching production by diffing OpenAPI contracts on pull requests and enforcing policy-driven outcomes.
 
 ## Workspace Layout
 
@@ -8,7 +8,7 @@ ContractGuard prevents breaking API changes from reaching production by diffing 
 - `apps/contract-guard/api`: NestJS HTTP API + webhook ingress
 - `apps/contract-guard/worker`: NestJS BullMQ worker for contract analysis
 - `packages/api`: shared domain contracts/types
-- `packages/db`: ContractGuard-scoped Prisma package (`@herk/db-contract-guard`)
+- `packages/db`: API Contract Guard-scoped Prisma package (`@herk/db-contract-guard`)
 
 ## Requirements
 
@@ -65,7 +65,7 @@ pnpm --filter web dev
 
 ## DB Schema Isolation
 
-Use a schema-scoped Postgres URL for each app package. ContractGuard defaults to:
+Use a schema-scoped Postgres URL for each app package. API Contract Guard defaults to:
 
 - `postgresql://.../contractguard?schema=contract_guard`
 
@@ -94,6 +94,10 @@ docker compose -f docker-compose.infra.yml --env-file .env.infra up -d
 Admin UIs (localhost by default):
 - pgAdmin: `http://127.0.0.1:5050`
 - RedisInsight: `http://127.0.0.1:5540`
+
+Production domain split:
+- Product app/API (`web`, `api`, `worker`): `https://apicontractguard.com`
+- Infra/admin endpoints (`pgadmin`, `redisinsight`): `https://paddy.systems`
 
 To expose those admin UIs over the web, start infra Caddy and route:
 - `http://<server>/pgadmin`

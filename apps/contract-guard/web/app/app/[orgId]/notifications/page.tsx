@@ -1,5 +1,6 @@
 import { SectionHeader } from '../../../components/section-header';
 import { MarkNotificationsReadButton } from '../../../components/mark-notifications-read-button';
+import { PrFailureEmailToggle } from '../../../components/pr-failure-email-toggle';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -12,6 +13,10 @@ interface Notification {
   readAt: string | null;
 }
 
+interface NotificationPreferences {
+  emailOnPrFailure: boolean;
+}
+
 export default async function NotificationsPage({
   params,
 }: {
@@ -21,13 +26,19 @@ export default async function NotificationsPage({
   const notifications = await apiGet<Notification[]>(`/v1/orgs/${orgId}/notifications`).catch(
     () => [],
   );
+  const preferences = await apiGet<NotificationPreferences>(
+    `/v1/orgs/${orgId}/notifications/preferences`,
+  ).catch(() => ({
+    emailOnPrFailure: true,
+  }));
   const unreadIds = notifications.filter((notification) => !notification.readAt).map((notification) => notification.id);
 
   return (
     <>
       <SectionHeader title="Notifications" subtitle="In-app alerts for failing and warning checks" />
+      <PrFailureEmailToggle orgId={orgId} initialValue={preferences.emailOnPrFailure} />
       <section className="card">
-        <div className="cta-row" style={{ marginTop: 0, marginBottom: '0.8rem' }}>
+        <div className="cta-row mt-0 mb-3">
           <MarkNotificationsReadButton
             orgId={orgId}
             label="Mark all unread as read"

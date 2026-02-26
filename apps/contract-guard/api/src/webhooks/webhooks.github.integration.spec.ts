@@ -26,6 +26,7 @@ describe('WebhooksService GitHub PR integration', () => {
 
   const queues = {
     enqueuePrAnalysis: jest.fn(),
+    enqueueOrgEmailNotification: jest.fn(),
   };
 
   const service = new WebhooksService(prisma as never, queues as never);

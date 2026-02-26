@@ -5,6 +5,7 @@ import { RbacService } from '../common/rbac/rbac.service';
 
 import { BillingController } from './billing.controller';
 import { ChecksController } from './checks.controller';
+import { DashboardController } from './dashboard.controller';
 import { GithubInstallationsController } from './github-installations.controller';
 import { MembersController } from './members.controller';
 import { MeController } from './me.controller';
@@ -24,6 +25,7 @@ import { WaiversController } from './waivers.controller';
     ServicesController,
     PoliciesController,
     ChecksController,
+    DashboardController,
     GithubInstallationsController,
     WaiversController,
     NotificationsController,

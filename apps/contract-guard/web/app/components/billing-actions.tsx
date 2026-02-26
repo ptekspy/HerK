@@ -3,34 +3,11 @@
 import { useState } from 'react';
 
 import { apiPost } from '../../lib/api';
+import { SubscriptionCheckoutForm } from './subscription-checkout-form';
 
 export function BillingActions({ orgId }: { orgId: string }) {
-  const [loading, setLoading] = useState<'checkout' | 'portal' | null>(null);
+  const [loading, setLoading] = useState<'portal' | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const openCheckout = async () => {
-    setError(null);
-    setLoading('checkout');
-
-    try {
-      const result = await apiPost<{ checkoutUrl?: string; mode?: string }>(
-        `/v1/orgs/${orgId}/billing/checkout-session`,
-        {
-          plan: 'GROWTH',
-        },
-      );
-
-      if (!result.checkoutUrl) {
-        throw new Error('Checkout URL was not returned by API.');
-      }
-
-      window.location.assign(result.checkoutUrl);
-    } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : 'Checkout failed');
-    } finally {
-      setLoading(null);
-    }
-  };
 
   const openPortal = async () => {
     setError(null);
@@ -55,10 +32,8 @@ export function BillingActions({ orgId }: { orgId: string }) {
   };
 
   return (
-    <div className="form-grid" style={{ marginTop: '0.6rem' }}>
-      <button className="btn btn-primary" type="button" onClick={openCheckout} disabled={loading !== null}>
-        {loading === 'checkout' ? 'Opening checkout…' : 'Start checkout'}
-      </button>
+    <div className="form-grid mt-form-offset">
+      <SubscriptionCheckoutForm orgId={orgId} ctaLabel="Choose plan and checkout" />
       <button className="btn btn-secondary" type="button" onClick={openPortal} disabled={loading !== null}>
         {loading === 'portal' ? 'Opening portal…' : 'Open customer portal'}
       </button>

@@ -1,4 +1,4 @@
-# ContractGuard Web (Next.js)
+# API Contract Guard Web (Next.js)
 
 Product UI for onboarding and org-scoped operations:
 
@@ -21,6 +21,10 @@ pnpm --filter web dev
 Default port: `4000`
 
 Set `NEXT_PUBLIC_API_URL` to point at the API (default `http://localhost:4001`).
+For proxied production setups, set:
+- `NEXT_PUBLIC_WEB_URL=https://apicontractguard.com`
+- `NEXT_PUBLIC_API_URL=https://apicontractguard.com`
+- `INTERNAL_API_URL=http://contractguard-api:4001` (server-side fetches inside container network)
 
 For OAuth onboarding, set either:
 

@@ -66,10 +66,10 @@ export function RefreshRepositoriesButton({
       >
         {loading ? 'Refreshing…' : 'Refresh repositories'}
       </button>
-      {error && <p className="flash flash-error" style={{ marginTop: '0.75rem' }}>{error}</p>}
-      {ok && <p className="flash flash-ok" style={{ marginTop: '0.75rem' }}>{ok}</p>}
+      {error && <p className="flash flash-error mt-3">{error}</p>}
+      {ok && <p className="flash flash-ok mt-3">{ok}</p>}
       {installations.length === 0 && (
-        <p className="flash" style={{ marginTop: '0.75rem' }}>
+        <p className="flash mt-3">
           No GitHub App installation found yet.
         </p>
       )}

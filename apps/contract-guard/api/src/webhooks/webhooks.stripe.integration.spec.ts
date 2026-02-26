@@ -13,6 +13,9 @@ describe('WebhooksService Stripe integration', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
+    organization: {
+      update: jest.fn(),
+    },
   } as unknown as {
     webhookEvent: {
       create: jest.Mock;
@@ -23,12 +26,16 @@ describe('WebhooksService Stripe integration', () => {
       findFirst: jest.Mock;
       update: jest.Mock;
     };
+    organization: {
+      update: jest.Mock;
+    };
   };
 
   const service = new WebhooksService(
     prisma as never,
     {
       enqueuePrAnalysis: jest.fn(),
+      enqueueOrgEmailNotification: jest.fn(),
     } as never,
   );
 
@@ -70,6 +77,10 @@ describe('WebhooksService Stripe integration', () => {
   it('syncs customer.subscription.updated status and period end', async () => {
     prisma.subscription.findFirst.mockResolvedValue({
       id: 'sub_db_1',
+      orgId: 'org_1',
+      status: 'TRIALING',
+      stripePriceId: 'price_old',
+      cancelAtPeriodEnd: false,
     });
 
     const event = {

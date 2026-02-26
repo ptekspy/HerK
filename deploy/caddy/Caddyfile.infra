@@ -1,24 +1,40 @@
+www.apicontractguard.com {
+	redir https://apicontractguard.com{uri} 308
+}
+
+apicontractguard.com {
+	encode zstd gzip
+
+	@api path /v1 /v1/* /webhooks /webhooks/* /auth /auth/* /health
+	handle @api {
+		reverse_proxy contractguard-api:4001
+	}
+
+	handle {
+		reverse_proxy contractguard-web:4000
+	}
+}
+
+www.paddy.systems {
+	redir https://paddy.systems{uri} 308
+}
+
 paddy.systems {
-  encode zstd gzip
+	encode zstd gzip
 
-  handle_path /pgadmin* {
-    reverse_proxy pgadmin:80 {
-      header_up X-Script-Name /pgadmin
-      header_up X-Forwarded-Prefix /pgadmin
-      header_up X-Scheme {scheme}
-    }
-  }
+	handle_path /pgadmin* {
+		reverse_proxy pgadmin:80 {
+			header_up X-Script-Name /pgadmin
+			header_up X-Forwarded-Prefix /pgadmin
+			header_up X-Scheme {scheme}
+		}
+	}
 
-  handle_path /redisinsight* {
-    reverse_proxy redisinsight:5540
-  }
+	handle_path /redisinsight* {
+		reverse_proxy redisinsight:5540
+	}
 
-  @api path /v1 /v1/* /webhooks /webhooks/* /auth /auth/* /health
-  handle @api {
-    reverse_proxy contractguard-api:4001
-  }
-
-  handle {
-    reverse_proxy contractguard-web:4000
-  }
+	handle {
+		redir https://apicontractguard.com{uri} 308
+	}
 }

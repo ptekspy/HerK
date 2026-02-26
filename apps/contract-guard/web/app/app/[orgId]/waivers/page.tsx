@@ -45,7 +45,7 @@ export default async function WaiversPage({ params }: { params: Promise<{ orgId:
             Waivers should remain narrowly scoped and short-lived. Each waiver is recorded for
             policy and incident audits.
           </p>
-          <table className="table" style={{ marginTop: '0.9rem' }}>
+          <table className="table mt-4">
             <thead>
               <tr>
                 <th>Reason</th>

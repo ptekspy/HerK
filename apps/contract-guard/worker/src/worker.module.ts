@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 
 import { PrismaModule } from './services/prisma.module';
 import { PrAnalysisProcessor } from './processors/pr-analysis.processor';
+import { OrgEmailNotificationProcessor } from './processors/org-email-notification.processor';
 import { ContractSourceService } from './services/contract-source.service';
 import { DiffEngineService } from './services/diff-engine.service';
 import { GithubPublisherService } from './services/github-publisher.service';
@@ -29,10 +30,14 @@ import { PolicyEngineService } from './services/policy-engine.service';
     BullModule.registerQueue({
       name: 'pr-analysis',
     }),
+    BullModule.registerQueue({
+      name: 'email-notifications',
+    }),
     PrismaModule,
   ],
   providers: [
     PrAnalysisProcessor,
+    OrgEmailNotificationProcessor,
     ContractSourceService,
     DiffEngineService,
     PolicyEngineService,

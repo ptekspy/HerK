@@ -157,7 +157,7 @@ export function CreateServiceForm({ orgId, repositories }: CreateServiceFormProp
         </label>
       )}
 
-      <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'center' }}>
+      <label className="inline-checkbox">
         <input
           type="checkbox"
           name="isActive"

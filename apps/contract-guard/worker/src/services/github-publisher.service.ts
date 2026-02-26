@@ -47,7 +47,7 @@ export class GithubPublisherService {
     issues: Array<ComputedIssue & { isWaived: boolean }>,
   ): string {
     if (!issues.length) {
-      return `### ContractGuard report for ${serviceName}\n\n${summary}`;
+      return `### API Contract Guard report for ${serviceName}\n\n${summary}`;
     }
 
     const lines = issues.map((issue) => {
@@ -56,7 +56,7 @@ export class GithubPublisherService {
     });
 
     return [
-      `### ContractGuard report for ${serviceName}`,
+      `### API Contract Guard report for ${serviceName}`,
       '',
       summary,
       '',
@@ -72,7 +72,7 @@ export class GithubPublisherService {
     }
 
     const output = {
-      title: 'ContractGuard analysis',
+      title: 'API Contract Guard analysis',
       summary: input.summary,
       text: this.buildMarkdownReport(input.serviceName, input.summary, input.issues),
     };
@@ -103,7 +103,7 @@ export class GithubPublisherService {
       const created = await octokit.rest.checks.create({
         owner: input.payload.repositoryOwner,
         repo: input.payload.repositoryName,
-        name: `ContractGuard / ${input.serviceName}`,
+        name: `API Contract Guard / ${input.serviceName}`,
         head_sha: input.payload.headSha,
         status: checkStatus,
         conclusion: checkConclusion,

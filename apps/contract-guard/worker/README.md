@@ -1,4 +1,4 @@
-# ContractGuard Worker (NestJS + BullMQ)
+# API Contract Guard Worker (NestJS + BullMQ)
 
 Asynchronous processor for PR contract analysis jobs.
 

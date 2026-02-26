@@ -70,15 +70,25 @@ export class WebhooksService {
       return null;
     }
 
-    if (process.env.STRIPE_PRICE_ID_STARTER && priceId === process.env.STRIPE_PRICE_ID_STARTER) {
+    if (
+      (process.env.STRIPE_PRICE_ID_STARTER && priceId === process.env.STRIPE_PRICE_ID_STARTER) ||
+      (process.env.STRIPE_PRICE_ID_STARTER_YEARLY &&
+        priceId === process.env.STRIPE_PRICE_ID_STARTER_YEARLY)
+    ) {
       return 'STARTER';
     }
-    if (process.env.STRIPE_PRICE_ID_GROWTH && priceId === process.env.STRIPE_PRICE_ID_GROWTH) {
+    if (
+      (process.env.STRIPE_PRICE_ID_GROWTH && priceId === process.env.STRIPE_PRICE_ID_GROWTH) ||
+      (process.env.STRIPE_PRICE_ID_GROWTH_YEARLY &&
+        priceId === process.env.STRIPE_PRICE_ID_GROWTH_YEARLY)
+    ) {
       return 'GROWTH';
     }
     if (
-      process.env.STRIPE_PRICE_ID_ENTERPRISE &&
-      priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE
+      (process.env.STRIPE_PRICE_ID_ENTERPRISE &&
+        priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE) ||
+      (process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY &&
+        priceId === process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY)
     ) {
       return 'ENTERPRISE';
     }
@@ -88,6 +98,14 @@ export class WebhooksService {
 
   private toJsonValue(payload: unknown): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(payload)) as Prisma.InputJsonValue;
+  }
+
+  private normalizeSubscriptionStatus(status: string) {
+    if (status === 'active') return 'ACTIVE';
+    if (status === 'trialing') return 'TRIALING';
+    if (status === 'past_due') return 'PAST_DUE';
+    if (status === 'canceled') return 'CANCELED';
+    return 'INCOMPLETE';
   }
 
   verifyGithubSignature(rawBody: Buffer | string, signature: string | undefined) {
@@ -431,6 +449,14 @@ export class WebhooksService {
               },
             });
           }
+
+          await this.queues.enqueueOrgEmailNotification({
+            orgId,
+            kind: 'BILLING_SIGNUP',
+            title: `Subscription started (${requestedPlan ?? 'STARTER'})`,
+            body: `Your API Contract Guard subscription is active with a 3-day free trial. Plan: ${requestedPlan ?? 'STARTER'}.`,
+            link: `/app/${orgId}/billing`,
+          });
         }
       }
 
@@ -449,23 +475,20 @@ export class WebhooksService {
         if (existing) {
           const currentPriceId = sub.items.data[0]?.price?.id ?? null;
           const inferredPlan = this.resolvePlanFromStripePriceId(currentPriceId);
+          const nextStatus = this.normalizeSubscriptionStatus(sub.status);
+          const nextPeriodEnd = sub.items.data[0]
+            ? new Date(sub.items.data[0].current_period_end * 1000)
+            : null;
+          const statusChanged = existing.status !== nextStatus;
+          const planChanged = existing.stripePriceId !== currentPriceId;
+          const cancelChanged = existing.cancelAtPeriodEnd !== sub.cancel_at_period_end;
 
           await this.prisma.subscription.update({
             where: { id: existing.id },
             data: {
-              status:
-                sub.status === 'active'
-                  ? 'ACTIVE'
-                  : sub.status === 'trialing'
-                    ? 'TRIALING'
-                    : sub.status === 'past_due'
-                      ? 'PAST_DUE'
-                      : sub.status === 'canceled'
-                        ? 'CANCELED'
-                        : 'INCOMPLETE',
-              currentPeriodEnd: sub.items.data[0]
-                ? new Date(sub.items.data[0].current_period_end * 1000)
-                : null,
+              status: nextStatus,
+              currentPeriodEnd: nextPeriodEnd,
+              stripePriceId: currentPriceId,
               cancelAtPeriodEnd: sub.cancel_at_period_end,
             },
           });
@@ -476,6 +499,28 @@ export class WebhooksService {
               data: {
                 billingPlan: inferredPlan,
               },
+            });
+          }
+
+          if (event.type === 'customer.subscription.deleted') {
+            await this.queues.enqueueOrgEmailNotification({
+              orgId: existing.orgId,
+              kind: 'BILLING_CANCELLED',
+              title: 'Subscription cancelled',
+              body: 'Your API Contract Guard subscription has been cancelled.',
+              link: `/app/${existing.orgId}/billing`,
+            });
+          } else if (statusChanged || planChanged || cancelChanged) {
+            const planLabel = inferredPlan ?? 'unchanged';
+            const cancellationMessage = sub.cancel_at_period_end
+              ? 'Cancellation at period end is enabled.'
+              : 'Cancellation at period end is disabled.';
+            await this.queues.enqueueOrgEmailNotification({
+              orgId: existing.orgId,
+              kind: 'BILLING_UPDATED',
+              title: 'Subscription updated',
+              body: `Status: ${nextStatus}. Plan: ${planLabel}. ${cancellationMessage}`,
+              link: `/app/${existing.orgId}/billing`,
             });
           }
         }

@@ -69,9 +69,23 @@ export class AuthController {
   async githubCallback(
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
+    @Query('installation_id') installationId: string | undefined,
+    @Query('setup_action') setupAction: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    // Some GitHub App configurations return install callbacks to this OAuth route.
+    // Handle that shape here for backward compatibility.
+    if (installationId || setupAction) {
+      const completed = await this.authService.completeGithubAppInstall({
+        state: state || '',
+        installationId,
+        setupAction,
+      });
+
+      return res.redirect(completed.redirectTo);
+    }
+
     const completed = await this.authService.completeGithubOAuth({
       code: code || '',
       state: state || '',

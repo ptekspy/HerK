@@ -3,6 +3,7 @@ import { CreateRepoForm } from '../../../components/create-repo-form';
 import { RefreshRepositoriesButton } from '../../../components/refresh-repositories-button';
 
 import { apiGet } from '../../../../lib/api-server';
+import { getRequestOrigin } from '../../../../lib/request-origin';
 
 interface Repo {
   id: string;
@@ -34,6 +35,10 @@ export default async function ReposPage({
   const query = await searchParams;
   const installStatus = query.githubAppInstall;
   const installStatusReason = query.githubAppInstallReason;
+  const requestOrigin = await getRequestOrigin();
+  const apiBase = requestOrigin;
+  const webBase = requestOrigin;
+  const githubAppInstallUrl = `${apiBase}/auth/github/app/install/start?orgId=${encodeURIComponent(orgId)}&returnTo=${encodeURIComponent(`${webBase}/app/${orgId}/repos`)}`;
   const repos = await apiGet<Repo[]>(`/v1/orgs/${orgId}/repos`).catch(() => []);
   const installations = await apiGet<GithubInstallation[]>(
     `/v1/orgs/${orgId}/github/installations`,
@@ -41,7 +46,7 @@ export default async function ReposPage({
 
   return (
     <>
-      <SectionHeader title="Repositories" subtitle="Map GitHub repositories to ContractGuard services" />
+      <SectionHeader title="Repositories" subtitle="Map GitHub repositories to API Contract Guard services" />
 
       <section className="grid">
         <article className="card card-grid-6">
@@ -66,26 +71,32 @@ export default async function ReposPage({
           </table>
         </article>
 
-        <article className="card card-grid-6">
+        <article className="card card-grid-6" id="github-sync">
           <h3>GitHub App</h3>
           <p>Refresh repositories from your connected GitHub App installation.</p>
 
+          <div className="cta-row mt-3">
+            <a className="btn btn-secondary" href={githubAppInstallUrl}>
+              Refresh GitHub App permissions
+            </a>
+          </div>
+
           {installStatus === 'ok' && (
-            <p className="flash flash-ok" style={{ marginTop: '0.85rem' }}>
+            <p className="flash flash-ok mt-3">
               GitHub App installation connected.
             </p>
           )}
           {installStatus === 'pending' && (
-            <p className="flash" style={{ marginTop: '0.85rem' }}>
+            <p className="flash mt-3">
               GitHub App installation is pending approval.
             </p>
           )}
           {installStatus === 'error' && (
-            <p className="flash flash-error" style={{ marginTop: '0.85rem' }}>
+            <p className="flash flash-error mt-3">
               Installation callback failed{installStatusReason ? ` (${installStatusReason})` : ''}.
             </p>
           )}
-          <div style={{ marginTop: '1rem' }}>
+          <div className="mt-4" id="refresh-repositories">
             <RefreshRepositoriesButton
               orgId={orgId}
               installations={installations.map((installation) => ({
@@ -95,7 +106,7 @@ export default async function ReposPage({
             />
           </div>
 
-          <table className="table" style={{ marginTop: '1rem' }}>
+          <table className="table mt-4">
             <thead>
               <tr>
                 <th>Account</th>

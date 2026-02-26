@@ -121,6 +121,105 @@ export interface BillingSummary {
   currentPeriodEnd: string | null;
 }
 
+export type DashboardWizardStepId =
+  | 'github_installation_connected'
+  | 'repositories_synced'
+  | 'first_service_created'
+  | 'policy_reviewed'
+  | 'notifications_reviewed'
+  | 'first_check_received'
+  | 'teammate_invited';
+
+export type DashboardWizardAcknowledgedStepId =
+  | 'policy_reviewed'
+  | 'notifications_reviewed';
+
+export type DashboardWizardStepStatus = 'completed' | 'pending' | 'warning';
+
+export interface DashboardWizardStep {
+  id: DashboardWizardStepId;
+  label: string;
+  description: string;
+  required: boolean;
+  status: DashboardWizardStepStatus;
+  completed: boolean;
+  actionLabel?: string;
+  actionHref?: string;
+  note?: string;
+}
+
+export interface DashboardWizardStateSummary {
+  isDismissed: boolean;
+  isComplete: boolean;
+  completedAt: string | null;
+  dismissedAt: string | null;
+  requiredCompleted: number;
+  requiredTotal: number;
+  steps: DashboardWizardStep[];
+}
+
+export interface DashboardMetrics {
+  repositories: number;
+  services: number;
+  members: number;
+  checksTotal: number;
+  checksLast7Days: number;
+  failingChecksLast7Days: number;
+  unreadNotifications: number;
+}
+
+export interface DashboardRecentCheck {
+  id: string;
+  conclusion: CheckConclusion | null;
+  createdAt: string;
+  serviceName: string;
+  repositoryFullName: string;
+  pullRequestNumber: number;
+}
+
+export interface DashboardRecentNotification {
+  id: string;
+  kind: string;
+  title: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface DashboardAttentionItem {
+  key: string;
+  level: 'warn' | 'error';
+  title: string;
+  message: string;
+  href?: string;
+}
+
+export interface DashboardSummary {
+  org: {
+    id: string;
+    name: string;
+    billingPlan: BillingPlan;
+  };
+  billing: {
+    status: string | null;
+    serviceCount: number;
+    serviceLimit: number | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  };
+  metrics: DashboardMetrics;
+  wizard: DashboardWizardStateSummary;
+  recentChecks: DashboardRecentCheck[];
+  recentNotifications: DashboardRecentNotification[];
+  attention: DashboardAttentionItem[];
+}
+
+export interface UpdateDashboardWizardStateRequest {
+  dismissed?: boolean;
+  markSeen?: boolean;
+  acknowledgeStepId?: DashboardWizardAcknowledgedStepId;
+  clearAcknowledgeStepId?: DashboardWizardAcknowledgedStepId;
+}
+
 export interface PrAnalysisJobPayload {
   orgId: string;
   repositoryId: string;
@@ -133,4 +232,12 @@ export interface PrAnalysisJobPayload {
   repositoryOwner: string;
   repositoryName: string;
   defaultBranch: string;
+}
+
+export interface OrgEmailNotificationJobPayload {
+  orgId: string;
+  kind: string;
+  title: string;
+  body: string;
+  link?: string | null;
 }

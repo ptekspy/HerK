@@ -50,7 +50,7 @@ export default async function ServicesPage({ params }: { params: Promise<{ orgId
           </table>
         </article>
 
-        <article className="card card-grid-6">
+        <article className="card card-grid-6" id="create-service">
           <h3>Add service</h3>
           <CreateServiceForm orgId={orgId} repositories={repositories} />
         </article>

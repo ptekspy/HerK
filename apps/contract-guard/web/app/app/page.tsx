@@ -10,7 +10,7 @@ export default async function AppIndexPage() {
   const orgs = await apiGet<OrgMembership[]>('/v1/orgs').catch(() => []);
 
   if (orgs[0]?.id) {
-    redirect(`/app/${orgs[0].id}/dashboard`);
+    redirect(`/app/${orgs[0].id}`);
   }
 
   redirect('/onboarding');

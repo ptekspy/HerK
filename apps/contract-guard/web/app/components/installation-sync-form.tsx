@@ -71,7 +71,7 @@ export function InstallationSyncForm({ orgId }: { orgId: string }) {
         />
       </label>
 
-      <label style={{ display: 'flex', gap: '0.55rem', alignItems: 'center' }}>
+      <label className="inline-checkbox">
         <input
           type="checkbox"
           checked={syncRepositories}

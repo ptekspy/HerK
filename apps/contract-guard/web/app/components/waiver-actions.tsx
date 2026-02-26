@@ -30,7 +30,7 @@ export function WaiverActions({ orgId, waiverId }: { orgId: string; waiverId: st
   };
 
   return (
-    <div style={{ display: 'grid', gap: '0.35rem' }}>
+    <div className="stack-xs">
       <button className="btn btn-secondary" type="button" onClick={onRevoke} disabled={loading}>
         {loading ? 'Revoking…' : 'Revoke'}
       </button>

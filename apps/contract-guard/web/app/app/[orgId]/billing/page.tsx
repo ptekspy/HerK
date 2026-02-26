@@ -55,8 +55,8 @@ export default async function BillingPage({ params }: { params: Promise<{ orgId:
         <article className="card card-grid-6">
           <h3>Checkout and portal</h3>
           <p>
-            Use API endpoints <code>/v1/orgs/:orgId/billing/checkout-session</code> and{' '}
-            <code>/v1/orgs/:orgId/billing/portal-session</code> to launch Stripe flows.
+            Choose a plan to start your 3-day trial (card required), then use the customer portal for
+            upgrades, downgrades, and cancellations.
           </p>
           <BillingActions orgId={orgId} />
         </article>

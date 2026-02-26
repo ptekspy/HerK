@@ -1,12 +1,12 @@
 # @herk/db-contract-guard
 
-App-scoped Prisma package for ContractGuard.
+App-scoped Prisma package for API Contract Guard.
 
 ## Why app-scoped
 
 This monorepo will host multiple products over time. Each product should own its own Prisma package and migration history so schema evolution stays isolated.
 
-ContractGuard uses:
+API Contract Guard uses:
 
 - Package: `@herk/db-contract-guard`
 - Postgres schema: `contract_guard`

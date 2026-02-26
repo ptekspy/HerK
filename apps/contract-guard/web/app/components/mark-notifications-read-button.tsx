@@ -37,7 +37,7 @@ export function MarkNotificationsReadButton({
   };
 
   return (
-    <div style={{ display: 'grid', gap: '0.3rem' }}>
+    <div className="stack-xs">
       <button
         className="btn btn-secondary"
         type="button"

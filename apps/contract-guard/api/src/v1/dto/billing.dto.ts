@@ -6,6 +6,10 @@ export class CreateCheckoutSessionDto {
   plan?: 'STARTER' | 'GROWTH' | 'ENTERPRISE';
 
   @IsOptional()
+  @IsIn(['MONTHLY', 'YEARLY'])
+  billingCycle?: 'MONTHLY' | 'YEARLY';
+
+  @IsOptional()
   @IsUrl()
   successUrl?: string;
 

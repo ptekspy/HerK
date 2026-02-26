@@ -1,4 +1,11 @@
 import { SectionHeader } from '../../../components/section-header';
+import { DashboardAttentionNeeded } from '../../../components/dashboard-attention-needed';
+import { DashboardKpiGrid } from '../../../components/dashboard-kpi-grid';
+import { DashboardQuickActions } from '../../../components/dashboard-quick-actions';
+import { DashboardRecentChecks } from '../../../components/dashboard-recent-checks';
+import { DashboardRecentNotifications } from '../../../components/dashboard-recent-notifications';
+import { DashboardSetupWizard } from '../../../components/dashboard-setup-wizard';
+import type { DashboardSummary } from '../../../components/dashboard-types';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -14,30 +21,24 @@ interface OrgSummary {
   };
 }
 
-export default async function DashboardPage({
-  params,
-}: {
-  params: Promise<{ orgId: string }>;
-}) {
-  const { orgId } = await params;
+function isSummaryNotFoundError(error: unknown) {
+  return error instanceof Error && error.message.includes('status 404');
+}
 
-  const org = await apiGet<OrgSummary>(`/v1/orgs/${orgId}`).catch(() => ({
-    id: orgId,
-    name: 'Demo Org',
-    billingPlan: 'STARTER',
-    _count: {
-      members: 0,
-      repositories: 0,
-      services: 0,
-      checkRuns: 0,
-    },
-  }));
+function setupSubtitle(summary: DashboardSummary) {
+  if (summary.wizard.isComplete) {
+    return 'Setup complete. Monitor ongoing contract health and team activity below.';
+  }
 
+  return `${summary.wizard.requiredCompleted}/${summary.wizard.requiredTotal} required setup tasks complete.`;
+}
+
+function LegacyDashboard({ org }: { org: OrgSummary }) {
   return (
     <>
       <SectionHeader
         title={`${org.name} dashboard`}
-        subtitle="Recent contract integrity posture and adoption metrics"
+        subtitle="Dashboard summary endpoint not available yet; showing compatibility fallback."
       />
 
       <section className="grid">
@@ -62,6 +63,74 @@ export default async function DashboardPage({
           <p>{org._count.members} collaborators currently have access.</p>
         </article>
       </section>
+    </>
+  );
+}
+
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ orgId: string }>;
+}) {
+  const { orgId } = await params;
+
+  let summary: DashboardSummary | null = null;
+
+  try {
+    summary = await apiGet<DashboardSummary>(`/v1/orgs/${orgId}/dashboard/summary`);
+  } catch (summaryError) {
+    if (!isSummaryNotFoundError(summaryError)) {
+      summary = null;
+    }
+  }
+
+  if (!summary) {
+    const org = await apiGet<OrgSummary>(`/v1/orgs/${orgId}`).catch(() => ({
+      id: orgId,
+      name: 'Demo Org',
+      billingPlan: 'STARTER',
+      _count: {
+        members: 0,
+        repositories: 0,
+        services: 0,
+        checkRuns: 0,
+      },
+    }));
+
+    return <LegacyDashboard org={org} />;
+  }
+
+  return (
+    <>
+      <SectionHeader title={`${summary.org.name} dashboard`} subtitle={setupSubtitle(summary)} />
+
+      {!summary.wizard.isComplete ? (
+        <DashboardSetupWizard
+          orgId={orgId}
+          wizard={summary.wizard}
+          compact={summary.wizard.isDismissed}
+        />
+      ) : (
+        <section className="card dashboard-setup-complete">
+          <h3>Setup complete</h3>
+          <p>Your workspace is fully configured. Use quick actions to continue daily operations.</p>
+        </section>
+      )}
+
+      <DashboardKpiGrid
+        metrics={summary.metrics}
+        billing={summary.billing}
+        plan={summary.org.billingPlan}
+      />
+
+      <DashboardQuickActions orgId={orgId} />
+
+      <section className="grid dashboard-activity-grid">
+        <DashboardRecentChecks checks={summary.recentChecks} />
+        <DashboardRecentNotifications notifications={summary.recentNotifications} />
+      </section>
+
+      <DashboardAttentionNeeded attention={summary.attention} />
     </>
   );
 }

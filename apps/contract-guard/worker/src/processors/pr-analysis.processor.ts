@@ -193,7 +193,7 @@ export class PrAnalysisProcessor extends WorkerHost {
 
       await this.notifications.createCheckNotification({
         orgId: payload.orgId,
-        title: `ContractGuard ${policy.conclusion} for ${checkRun.service.name}`,
+        title: `API Contract Guard ${policy.conclusion} for ${checkRun.service.name}`,
         body: policy.summary,
         link: `/app/${payload.orgId}/checks/${checkRun.id}`,
         severity: policy.conclusion,
@@ -220,7 +220,7 @@ export class PrAnalysisProcessor extends WorkerHost {
 
       await this.notifications.createCheckNotification({
         orgId: payload.orgId,
-        title: `ContractGuard ERROR for ${checkRun.service.name}`,
+        title: `API Contract Guard ERROR for ${checkRun.service.name}`,
         body: message,
         link: `/app/${payload.orgId}/checks/${checkRun.id}`,
         severity: 'ERROR',

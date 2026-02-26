@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(WorkerModule);
   const logger = new Logger('WorkerBootstrap');
 
-  logger.log('ContractGuard worker is running.');
+  logger.log('API Contract Guard worker is running.');
 
   const shutdown = async () => {
     logger.log('Shutting down worker...');

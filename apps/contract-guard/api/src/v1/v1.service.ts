@@ -4,7 +4,15 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { BillingPlan } from '@herk/api';
+import type {
+  BillingPlan,
+  DashboardAttentionItem,
+  DashboardSummary,
+  DashboardWizardAcknowledgedStepId,
+  DashboardWizardStep,
+  DashboardWizardStepStatus,
+  UpdateDashboardWizardStateRequest,
+} from '@herk/api';
 import { createAppAuth } from '@octokit/auth-app';
 import { Octokit } from '@octokit/rest';
 import Stripe from 'stripe';
@@ -18,8 +26,10 @@ import { CreateServiceDto, UpdateServiceDto } from './dto/service.dto';
 import { UpdatePolicyDto } from './dto/policy.dto';
 import { CreateWaiverDto, UpdateWaiverDto } from './dto/waiver.dto';
 import { MarkNotificationsReadDto } from './dto/notifications.dto';
+import { UpdateNotificationPreferencesDto } from './dto/notification-preferences.dto';
 import { CreateMemberDto, UpdateMemberDto } from './dto/member.dto';
 import { CreateCheckoutSessionDto } from './dto/billing.dto';
+import { UpdateDashboardWizardStateDto } from './dto/dashboard-wizard.dto';
 import { SyncGithubInstallationDto } from './dto/github-installation.dto';
 
 const PLAN_LIMITS: Record<BillingPlan, number | null> = {
@@ -27,6 +37,16 @@ const PLAN_LIMITS: Record<BillingPlan, number | null> = {
   GROWTH: 15,
   ENTERPRISE: null,
 };
+
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['ACTIVE', 'TRIALING', 'PAST_DUE']);
+
+const REQUIRED_WIZARD_STEP_IDS = [
+  'github_installation_connected',
+  'repositories_synced',
+  'first_service_created',
+  'policy_reviewed',
+  'notifications_reviewed',
+] as const;
 
 @Injectable()
 export class V1Service {
@@ -205,6 +225,447 @@ export class V1Service {
     }
 
     return organization;
+  }
+
+  async getDashboardSummary(userId: string, orgId: string): Promise<DashboardSummary> {
+    await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
+    return this.buildDashboardSummary(userId, orgId);
+  }
+
+  async updateDashboardWizardState(
+    userId: string,
+    orgId: string,
+    dto: UpdateDashboardWizardStateDto,
+  ) {
+    await this.rbac.requireOrgRole(userId, orgId, 'MEMBER');
+
+    const wizardState = await this.prisma.dashboardWizardState.upsert({
+      where: {
+        orgId_userId: {
+          orgId,
+          userId,
+        },
+      },
+      create: {
+        orgId,
+        userId,
+      },
+      update: {},
+    });
+
+    const isAcknowledgeStep = (
+      step: string,
+    ): step is DashboardWizardAcknowledgedStepId =>
+      step === 'policy_reviewed' || step === 'notifications_reviewed';
+
+    const acknowledgedSteps = new Set<DashboardWizardAcknowledgedStepId>(
+      wizardState.acknowledgedSteps.filter(isAcknowledgeStep),
+    );
+
+    if (dto.acknowledgeStepId) {
+      acknowledgedSteps.add(dto.acknowledgeStepId);
+    }
+
+    if (dto.clearAcknowledgeStepId) {
+      acknowledgedSteps.delete(dto.clearAcknowledgeStepId);
+    }
+
+    const updateData: UpdateDashboardWizardStateRequest = {};
+
+    if (dto.dismissed !== undefined) {
+      updateData.dismissed = dto.dismissed;
+    }
+
+    if (dto.markSeen) {
+      updateData.markSeen = true;
+    }
+
+    if (dto.acknowledgeStepId) {
+      updateData.acknowledgeStepId = dto.acknowledgeStepId;
+    }
+
+    if (dto.clearAcknowledgeStepId) {
+      updateData.clearAcknowledgeStepId = dto.clearAcknowledgeStepId;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await this.prisma.dashboardWizardState.update({
+        where: { id: wizardState.id },
+        data: {
+          dismissedAt:
+            dto.dismissed === undefined
+              ? undefined
+              : dto.dismissed
+                ? new Date()
+                : null,
+          lastSeenAt: dto.markSeen ? new Date() : undefined,
+          acknowledgedSteps:
+            dto.acknowledgeStepId || dto.clearAcknowledgeStepId
+              ? Array.from(acknowledgedSteps).sort()
+              : undefined,
+        },
+      });
+    }
+
+    const summary = await this.buildDashboardSummary(userId, orgId);
+    return summary.wizard;
+  }
+
+  private async buildDashboardSummary(
+    userId: string,
+    orgId: string,
+  ): Promise<DashboardSummary> {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      org,
+      installationCount,
+      wizardState,
+      checksLast7Days,
+      failingChecksLast7Days,
+      unreadNotifications,
+      recentChecks,
+      recentNotifications,
+    ] = await Promise.all([
+      this.prisma.organization.findUniqueOrThrow({
+        where: { id: orgId },
+        include: {
+          subscription: true,
+          _count: {
+            select: {
+              members: true,
+              repositories: true,
+              services: true,
+              checkRuns: true,
+            },
+          },
+        },
+      }),
+      this.prisma.githubInstallation.count({
+        where: { orgId },
+      }),
+      this.prisma.dashboardWizardState.findUnique({
+        where: {
+          orgId_userId: {
+            orgId,
+            userId,
+          },
+        },
+      }),
+      this.prisma.checkRun.count({
+        where: {
+          orgId,
+          createdAt: {
+            gte: sevenDaysAgo,
+          },
+        },
+      }),
+      this.prisma.checkRun.count({
+        where: {
+          orgId,
+          createdAt: {
+            gte: sevenDaysAgo,
+          },
+          OR: [
+            {
+              status: 'FAILED',
+            },
+            {
+              conclusion: {
+                in: ['FAIL', 'ERROR'],
+              },
+            },
+          ],
+        },
+      }),
+      this.prisma.notification.count({
+        where: {
+          orgId,
+          OR: [{ userId: null }, { userId }],
+          readAt: null,
+        },
+      }),
+      this.prisma.checkRun.findMany({
+        where: { orgId },
+        include: {
+          service: {
+            select: {
+              name: true,
+            },
+          },
+          repository: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 10,
+      }),
+      this.prisma.notification.findMany({
+        where: {
+          orgId,
+          OR: [{ userId: null }, { userId }],
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 10,
+      }),
+    ]);
+
+    const isAcknowledgeStep = (
+      step: string,
+    ): step is DashboardWizardAcknowledgedStepId =>
+      step === 'policy_reviewed' || step === 'notifications_reviewed';
+    const acknowledged = new Set<DashboardWizardAcknowledgedStepId>(
+      (wizardState?.acknowledgedSteps ?? []).filter(isAcknowledgeStep),
+    );
+
+    const hasGithubInstallation = installationCount > 0;
+    const hasRepositories = org._count.repositories > 0;
+    const hasServices = org._count.services > 0;
+    const hasFirstCheck = org._count.checkRuns > 0;
+    const hasTeammate = org._count.members > 1;
+
+    const toStepStatus = (
+      completed: boolean,
+      warning = false,
+    ): DashboardWizardStepStatus => {
+      if (completed) return 'completed';
+      if (warning) return 'warning';
+      return 'pending';
+    };
+
+    const steps: DashboardWizardStep[] = [
+      {
+        id: 'github_installation_connected',
+        label: 'Connect GitHub App',
+        description:
+          'GitHub App connection is expected as part of sign-in/onboarding and should already be complete.',
+        required: true,
+        completed: hasGithubInstallation,
+        status: toStepStatus(hasGithubInstallation, !hasGithubInstallation),
+        actionLabel: hasGithubInstallation ? 'Manage installation' : 'Reconnect GitHub',
+        actionHref: `/app/${orgId}/repos#github-sync`,
+        note: hasGithubInstallation
+          ? 'Connected during sign-in.'
+          : 'No installation record found for this organization.',
+      },
+      {
+        id: 'repositories_synced',
+        label: 'Sync repositories',
+        description: 'Import repositories from the GitHub App installation.',
+        required: true,
+        completed: hasRepositories,
+        status: toStepStatus(hasRepositories),
+        actionLabel: 'Open repositories',
+        actionHref: `/app/${orgId}/repos#github-sync`,
+      },
+      {
+        id: 'first_service_created',
+        label: 'Create first service',
+        description: 'Map a repository contract path to a tracked API Contract Guard service.',
+        required: true,
+        completed: hasServices,
+        status: toStepStatus(hasServices),
+        actionLabel: 'Create service',
+        actionHref: `/app/${orgId}/services#create-service`,
+      },
+      {
+        id: 'policy_reviewed',
+        label: 'Review policy defaults',
+        description: 'Confirm your organization policy defaults for breaking-change enforcement.',
+        required: true,
+        completed: acknowledged.has('policy_reviewed'),
+        status: toStepStatus(acknowledged.has('policy_reviewed')),
+        actionLabel: 'Open policies',
+        actionHref: `/app/${orgId}/policies`,
+      },
+      {
+        id: 'notifications_reviewed',
+        label: 'Confirm notifications',
+        description: 'Review PR failure email preference and in-app notification behavior.',
+        required: true,
+        completed: acknowledged.has('notifications_reviewed'),
+        status: toStepStatus(acknowledged.has('notifications_reviewed')),
+        actionLabel: 'Open notifications',
+        actionHref: `/app/${orgId}/notifications`,
+      },
+      {
+        id: 'first_check_received',
+        label: 'Receive first PR check',
+        description: 'Run a pull request with a contract change and verify check reporting.',
+        required: false,
+        completed: hasFirstCheck,
+        status: toStepStatus(hasFirstCheck),
+        actionLabel: 'Open checks',
+        actionHref: `/app/${orgId}/checks`,
+      },
+      {
+        id: 'teammate_invited',
+        label: 'Invite a teammate',
+        description: 'Add at least one collaborator so reviews and ownership are shared.',
+        required: false,
+        completed: hasTeammate,
+        status: toStepStatus(hasTeammate),
+        actionLabel: 'Manage team',
+        actionHref: `/app/${orgId}/team`,
+      },
+    ];
+
+    const requiredTotal = REQUIRED_WIZARD_STEP_IDS.length;
+    const requiredCompleted = steps.filter(
+      (step) =>
+        step.required &&
+        REQUIRED_WIZARD_STEP_IDS.includes(
+          step.id as (typeof REQUIRED_WIZARD_STEP_IDS)[number],
+        ) &&
+        step.completed,
+    ).length;
+    const isComplete = requiredCompleted === requiredTotal;
+
+    let completedAt = wizardState?.completedAt ?? null;
+    if (isComplete && !completedAt) {
+      completedAt = new Date();
+      await this.prisma.dashboardWizardState.upsert({
+        where: {
+          orgId_userId: {
+            orgId,
+            userId,
+          },
+        },
+        create: {
+          orgId,
+          userId,
+          acknowledgedSteps: Array.from(acknowledged),
+          completedAt,
+        },
+        update: {
+          completedAt,
+        },
+      });
+    }
+
+    const isSubscribed = Boolean(
+      org.subscription?.status &&
+        ACTIVE_SUBSCRIPTION_STATUSES.has(org.subscription.status),
+    );
+    const attention: DashboardAttentionItem[] = [];
+
+    if (!hasGithubInstallation) {
+      attention.push({
+        key: 'missing_installation',
+        level: 'warn',
+        title: 'GitHub App requires reconnection',
+        message:
+          'This organization has no GitHub installation record. Reconnect to restore repository sync and checks.',
+        href: `/app/${orgId}/repos#github-sync`,
+      });
+    }
+
+    if (!hasRepositories) {
+      attention.push({
+        key: 'missing_repositories',
+        level: 'warn',
+        title: 'No repositories synced',
+        message:
+          'Sync repositories from GitHub so services can be created and checks can run.',
+        href: `/app/${orgId}/repos#github-sync`,
+      });
+    }
+
+    if (!hasServices) {
+      attention.push({
+        key: 'missing_services',
+        level: 'warn',
+        title: 'No services configured',
+        message:
+          'Create your first service to start contract checks on pull requests.',
+        href: `/app/${orgId}/services#create-service`,
+      });
+    }
+
+    if (failingChecksLast7Days > 0) {
+      attention.push({
+        key: 'failing_checks',
+        level: 'error',
+        title: 'Recent failing contract checks',
+        message: `${failingChecksLast7Days} checks failed in the last 7 days.`,
+        href: `/app/${orgId}/checks`,
+      });
+    }
+
+    if (org.subscription?.status === 'PAST_DUE') {
+      attention.push({
+        key: 'billing_past_due',
+        level: 'warn',
+        title: 'Billing is past due',
+        message:
+          'Update billing details to avoid interruption to service creation and checks.',
+        href: `/app/${orgId}/billing`,
+      });
+    } else if (!isSubscribed) {
+      attention.push({
+        key: 'billing_inactive',
+        level: 'error',
+        title: 'Subscription is not active',
+        message:
+          'Choose a plan and complete checkout to continue using API Contract Guard fully.',
+        href: `/app/${orgId}/billing`,
+      });
+    }
+
+    return {
+      org: {
+        id: org.id,
+        name: org.name,
+        billingPlan: org.billingPlan as BillingPlan,
+      },
+      billing: {
+        status: org.subscription?.status ?? null,
+        serviceCount: org._count.services,
+        serviceLimit: PLAN_LIMITS[org.billingPlan as BillingPlan],
+        currentPeriodEnd: org.subscription?.currentPeriodEnd?.toISOString() ?? null,
+        cancelAtPeriodEnd: org.subscription?.cancelAtPeriodEnd ?? false,
+      },
+      metrics: {
+        repositories: org._count.repositories,
+        services: org._count.services,
+        members: org._count.members,
+        checksTotal: org._count.checkRuns,
+        checksLast7Days,
+        failingChecksLast7Days,
+        unreadNotifications,
+      },
+      wizard: {
+        isDismissed: Boolean(wizardState?.dismissedAt) && !isComplete,
+        isComplete,
+        completedAt: completedAt?.toISOString() ?? null,
+        dismissedAt: wizardState?.dismissedAt?.toISOString() ?? null,
+        requiredCompleted,
+        requiredTotal,
+        steps,
+      },
+      recentChecks: recentChecks.map((check) => ({
+        id: check.id,
+        conclusion: check.conclusion,
+        createdAt: check.createdAt.toISOString(),
+        serviceName: check.service.name,
+        repositoryFullName: check.repository.fullName,
+        pullRequestNumber: check.pullRequestNumber,
+      })),
+      recentNotifications: recentNotifications.map((notification) => ({
+        id: notification.id,
+        kind: notification.kind,
+        title: notification.title,
+        readAt: notification.readAt?.toISOString() ?? null,
+        createdAt: notification.createdAt.toISOString(),
+      })),
+      attention,
+    };
   }
 
   async listGithubInstallations(userId: string, orgId: string) {
@@ -440,9 +901,25 @@ export class V1Service {
     }
   }
 
+  private async assertActiveSubscription(orgId: string) {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { orgId },
+      select: {
+        status: true,
+      },
+    });
+
+    if (!subscription?.status || !ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
+      throw new BadRequestException(
+        'An active subscription is required before creating services. Please start billing checkout.',
+      );
+    }
+  }
+
   async createService(userId: string, orgId: string, dto: CreateServiceDto) {
     await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
 
+    await this.assertActiveSubscription(orgId);
     await this.assertServiceLimit(orgId);
 
     const repository = await this.prisma.repository.findFirst({
@@ -862,6 +1339,37 @@ export class V1Service {
     });
   }
 
+  async getNotificationPreferences(userId: string, orgId: string) {
+    await this.rbac.requireOrgRole(userId, orgId, 'VIEWER');
+
+    const org = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: orgId },
+      select: {
+        emailOnPrFailure: true,
+      },
+    });
+
+    return org;
+  }
+
+  async updateNotificationPreferences(
+    userId: string,
+    orgId: string,
+    dto: UpdateNotificationPreferencesDto,
+  ) {
+    await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
+
+    return this.prisma.organization.update({
+      where: { id: orgId },
+      data: {
+        emailOnPrFailure: dto.emailOnPrFailure,
+      },
+      select: {
+        emailOnPrFailure: true,
+      },
+    });
+  }
+
   async markNotificationsRead(userId: string, orgId: string, dto: MarkNotificationsReadDto) {
     await this.rbac.requireOrgRole(userId, orgId, 'MEMBER');
 
@@ -1023,7 +1531,7 @@ export class V1Service {
   ) {
     await this.rbac.requireOrgRole(userId, orgId, 'ADMIN');
 
-    if (!this.stripe || !process.env.STRIPE_PRICE_ID_STARTER) {
+    if (!this.stripe) {
       return {
         checkoutUrl: 'https://dashboard.stripe.com/test/checkout',
         mode: 'mock',
@@ -1038,27 +1546,53 @@ export class V1Service {
     });
 
     const plan = dto.plan ?? 'GROWTH';
-    const priceIdByPlan: Record<string, string | undefined> = {
-      STARTER: process.env.STRIPE_PRICE_ID_STARTER,
-      GROWTH: process.env.STRIPE_PRICE_ID_GROWTH,
-      ENTERPRISE: process.env.STRIPE_PRICE_ID_ENTERPRISE,
+    const billingCycle = dto.billingCycle ?? 'MONTHLY';
+    const priceIdByPlan: Record<
+      string,
+      {
+        MONTHLY?: string;
+        YEARLY?: string;
+      }
+    > = {
+      STARTER: {
+        MONTHLY: process.env.STRIPE_PRICE_ID_STARTER,
+        YEARLY: process.env.STRIPE_PRICE_ID_STARTER_YEARLY,
+      },
+      GROWTH: {
+        MONTHLY: process.env.STRIPE_PRICE_ID_GROWTH,
+        YEARLY: process.env.STRIPE_PRICE_ID_GROWTH_YEARLY,
+      },
+      ENTERPRISE: {
+        MONTHLY: process.env.STRIPE_PRICE_ID_ENTERPRISE,
+        YEARLY: process.env.STRIPE_PRICE_ID_ENTERPRISE_YEARLY,
+      },
     };
 
-    const priceId = priceIdByPlan[plan];
+    const priceId = priceIdByPlan[plan]?.[billingCycle];
 
     if (!priceId) {
-      throw new BadRequestException(`Stripe price id is not configured for ${plan}.`);
+      throw new BadRequestException(
+        `Stripe price id is not configured for ${plan} (${billingCycle.toLowerCase()}).`,
+      );
     }
 
     const session = await this.stripe.checkout.sessions.create({
       mode: 'subscription',
       success_url: dto.successUrl ?? process.env.STRIPE_SUCCESS_URL ?? 'http://localhost:4000/app',
       cancel_url: dto.cancelUrl ?? process.env.STRIPE_CANCEL_URL ?? 'http://localhost:4000/app',
+      payment_method_collection: 'always',
       customer: org.subscription?.stripeCustomerId ?? undefined,
       line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data:
+        org.subscription?.stripeSubscriptionId
+          ? undefined
+          : {
+              trial_period_days: 3,
+            },
       metadata: {
         orgId,
         requestedPlan: plan,
+        requestedBillingCycle: billingCycle,
       },
     });
 

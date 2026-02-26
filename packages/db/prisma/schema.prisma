@@ -88,6 +88,7 @@ model User {
   waivers      Waiver[]
   sessions     AuthSession[]
   githubAppInstallStates GithubAppInstallState[]
+  dashboardWizardStates DashboardWizardState[]
 
   @@index([email])
 }
@@ -153,6 +154,7 @@ model Organization {
   name          String
   slug          String               @unique
   billingPlan   BillingPlan          @default(STARTER)
+  emailOnPrFailure Boolean           @default(true)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -167,6 +169,7 @@ model Organization {
   emails        EmailDelivery[]
   subscription  Subscription?
   githubAppInstallStates GithubAppInstallState[]
+  dashboardWizardStates DashboardWizardState[]
 }
 
 model OrganizationMember {
@@ -179,6 +182,25 @@ model OrganizationMember {
 
   organization   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model DashboardWizardState {
+  id                String       @id @default(cuid())
+  orgId             String
+  userId            String
+  acknowledgedSteps String[]     @default([])
+  dismissedAt       DateTime?
+  completedAt       DateTime?
+  lastSeenAt        DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  organization      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([orgId, userId])
   @@index([orgId])
