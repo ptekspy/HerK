@@ -97,14 +97,25 @@ export class AuthService {
   }
 
   private getGithubAppInstallUrl() {
-    if (process.env.GITHUB_APP_INSTALL_URL) {
-      return process.env.GITHUB_APP_INSTALL_URL;
+    const configuredInstallUrl = process.env.GITHUB_APP_INSTALL_URL?.trim();
+    const hasPlaceholderInstallUrl =
+      configuredInstallUrl &&
+      (configuredInstallUrl.includes('<') || configuredInstallUrl.includes('>'));
+
+    if (configuredInstallUrl && !hasPlaceholderInstallUrl) {
+      return configuredInstallUrl;
     }
 
-    const appSlug = process.env.GITHUB_APP_SLUG;
+    const appSlug = process.env.GITHUB_APP_SLUG?.trim();
+    const hasPlaceholderSlug = appSlug && (appSlug.includes('<') || appSlug.includes('>'));
     if (!appSlug) {
       throw new InternalServerErrorException(
         'GitHub App install URL is missing. Set GITHUB_APP_INSTALL_URL or GITHUB_APP_SLUG.',
+      );
+    }
+    if (hasPlaceholderSlug) {
+      throw new InternalServerErrorException(
+        'GITHUB_APP_SLUG contains a placeholder value. Replace it with your real GitHub App slug.',
       );
     }
 

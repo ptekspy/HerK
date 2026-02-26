@@ -7,16 +7,22 @@ interface Organization {
   name: string;
 }
 
+function envOrDefault(value: string | undefined, fallback: string): string {
+  const normalized = value?.trim();
+  return normalized ? normalized : fallback;
+}
+
 export default async function OnboardingPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4001';
-  const webBase = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:4000';
+  const apiBase = envOrDefault(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:4001');
+  const webBase = envOrDefault(process.env.NEXT_PUBLIC_WEB_URL, 'http://localhost:4000');
   const demoMode = Boolean(process.env.NEXT_PUBLIC_DEMO_USER_EMAIL);
   const orgs = await apiGet<Organization[]>('/v1/orgs').catch(() => []);
   const primaryOrg = orgs[0] ?? null;
 
-  const oauthStartUrl =
-    process.env.NEXT_PUBLIC_GITHUB_OAUTH_URL ??
-    `${apiBase}/auth/github/start?returnTo=${encodeURIComponent(`${webBase}/onboarding`)}`;
+  const oauthStartUrl = envOrDefault(
+    process.env.NEXT_PUBLIC_GITHUB_OAUTH_URL,
+    `${apiBase}/auth/github/start?returnTo=${encodeURIComponent(`${webBase}/onboarding`)}`,
+  );
 
   const appInstallUrl = primaryOrg && !demoMode
     ? `${apiBase}/auth/github/app/install/start?orgId=${encodeURIComponent(primaryOrg.id)}&returnTo=${encodeURIComponent(`${webBase}/app/${primaryOrg.id}/repos`)}`

@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4001';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:4001';
 
 const demoEmail = process.env.NEXT_PUBLIC_DEMO_USER_EMAIL;
 const demoName = process.env.NEXT_PUBLIC_DEMO_USER_NAME;

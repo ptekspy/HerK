@@ -1,6 +1,8 @@
+import { redirect } from 'next/navigation';
+
 import { SectionHeader } from '../../../components/section-header';
 import { CreateRepoForm } from '../../../components/create-repo-form';
-import { InstallationSyncForm } from '../../../components/installation-sync-form';
+import { RefreshRepositoriesButton } from '../../../components/refresh-repositories-button';
 
 import { apiGet } from '../../../../lib/api-server';
 
@@ -23,6 +25,11 @@ interface PageSearchParams {
   githubAppInstallReason?: string;
 }
 
+function envOrDefault(value: string | undefined, fallback: string): string {
+  const normalized = value?.trim();
+  return normalized ? normalized : fallback;
+}
+
 export default async function ReposPage({
   params,
   searchParams,
@@ -34,8 +41,8 @@ export default async function ReposPage({
   const query = await searchParams;
   const installStatus = query.githubAppInstall;
   const installStatusReason = query.githubAppInstallReason;
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4001';
-  const webBase = process.env.NEXT_PUBLIC_WEB_URL ?? 'http://localhost:4000';
+  const apiBase = envOrDefault(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:4001');
+  const webBase = envOrDefault(process.env.NEXT_PUBLIC_WEB_URL, 'http://localhost:4000');
   const demoMode = Boolean(process.env.NEXT_PUBLIC_DEMO_USER_EMAIL);
   const appInstallUrl = demoMode
     ? null
@@ -44,6 +51,12 @@ export default async function ReposPage({
   const installations = await apiGet<GithubInstallation[]>(
     `/v1/orgs/${orgId}/github/installations`,
   ).catch(() => []);
+  const shouldAutoStartInstall =
+    Boolean(appInstallUrl) && installations.length === 0 && !installStatus;
+
+  if (shouldAutoStartInstall && appInstallUrl) {
+    redirect(appInstallUrl);
+  }
 
   return (
     <>
@@ -73,19 +86,8 @@ export default async function ReposPage({
         </article>
 
         <article className="card card-grid-6">
-          <h3>GitHub App installation</h3>
-          <p>Install or update the ContractGuard GitHub App before syncing repositories.</p>
-          <div className="cta-row" style={{ marginTop: '0.75rem' }}>
-            {appInstallUrl ? (
-              <a className="btn btn-secondary" href={appInstallUrl}>
-                Install GitHub App
-              </a>
-            ) : (
-              <button className="btn btn-secondary" type="button" disabled>
-                Install disabled in demo mode
-              </button>
-            )}
-          </div>
+          <h3>GitHub App</h3>
+          <p>Refresh repositories from your connected GitHub App installation.</p>
 
           {installStatus === 'ok' && (
             <p className="flash flash-ok" style={{ marginTop: '0.85rem' }}>
@@ -102,9 +104,23 @@ export default async function ReposPage({
               Installation callback failed{installStatusReason ? ` (${installStatusReason})` : ''}.
             </p>
           )}
+          {installStatus === 'error' && appInstallUrl && (
+            <div className="cta-row" style={{ marginTop: '0.75rem' }}>
+              <a className="btn btn-secondary" href={appInstallUrl}>
+                Retry GitHub App installation
+              </a>
+            </div>
+          )}
 
-          <h3 style={{ marginTop: '1.25rem' }}>Manual installation sync</h3>
-          <InstallationSyncForm orgId={orgId} />
+          <div style={{ marginTop: '1rem' }}>
+            <RefreshRepositoriesButton
+              orgId={orgId}
+              installations={installations.map((installation) => ({
+                installationId: installation.installationId,
+                accountLogin: installation.accountLogin,
+              }))}
+            />
+          </div>
 
           <table className="table" style={{ marginTop: '1rem' }}>
             <thead>
