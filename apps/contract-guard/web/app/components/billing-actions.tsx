@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { apiPost } from '../../lib/api';
 import { SubscriptionCheckoutForm } from './subscription-checkout-form';
+import { Button } from '@herk/ui/base/button';
 
 export function BillingActions({ orgId }: { orgId: string }) {
   const [loading, setLoading] = useState<'portal' | null>(null);
@@ -34,9 +35,9 @@ export function BillingActions({ orgId }: { orgId: string }) {
   return (
     <div className="form-grid mt-form-offset">
       <SubscriptionCheckoutForm orgId={orgId} ctaLabel="Choose plan and checkout" />
-      <button className="btn btn-secondary" type="button" onClick={openPortal} disabled={loading !== null}>
+      <Button className="btn btn-secondary" type="button" onClick={openPortal} disabled={loading !== null}>
         {loading === 'portal' ? 'Opening portal…' : 'Open customer portal'}
-      </button>
+      </Button>
       {error && <p className="flash flash-error">{error}</p>}
     </div>
   );

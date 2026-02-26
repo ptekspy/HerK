@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "@herk/tailwind-config";
+
 :root {
   --site-header-height: 74px;
 

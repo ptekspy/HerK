@@ -11,10 +11,16 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@herk/tailwind-config": "workspace:*",
+    "@herk/lib": "workspace:*",
     "@herk/ui": "workspace:*",
+    "@herk/utils": "workspace:*",
+    "@tailwindcss/vite": "^4.2.1",
     "next": "16.1.6",
+    "postcss": "^8.5.6",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@herk/eslint-config": "workspace:*",
