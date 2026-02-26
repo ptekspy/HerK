@@ -2,6 +2,7 @@ import { SectionHeader } from '../../../components/section-header';
 import { CreateWaiverForm } from '../../../components/create-waiver-form';
 import { WaiverActions } from '../../../components/waiver-actions';
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Waiver {
   id: string;
@@ -25,6 +26,7 @@ interface RepositoryOption {
 
 export default async function WaiversPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const waivers = await apiGet<Waiver[]>(`/v1/orgs/${orgId}/waivers`).catch(() => []);
   const services = await apiGet<ServiceOption[]>(`/v1/orgs/${orgId}/services`).catch(() => []);
   const repositories = await apiGet<RepositoryOption[]>(`/v1/orgs/${orgId}/repos`).catch(() => []);

@@ -3,6 +3,7 @@ import { MarkNotificationsReadButton } from '../../../components/mark-notificati
 import { PrFailureEmailToggle } from '../../../components/pr-failure-email-toggle';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Notification {
   id: string;
@@ -23,6 +24,7 @@ export default async function NotificationsPage({
   params: Promise<{ orgId: string }>;
 }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const notifications = await apiGet<Notification[]>(`/v1/orgs/${orgId}/notifications`).catch(
     () => [],
   );

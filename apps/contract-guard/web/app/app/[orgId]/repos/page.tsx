@@ -4,6 +4,7 @@ import { RefreshRepositoriesButton } from '../../../components/refresh-repositor
 
 import { apiGet } from '../../../../lib/api-server';
 import { getRequestOrigin } from '../../../../lib/request-origin';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Repo {
   id: string;
@@ -32,6 +33,7 @@ export default async function ReposPage({
   searchParams: Promise<PageSearchParams>;
 }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const query = await searchParams;
   const installStatus = query.githubAppInstall;
   const installStatusReason = query.githubAppInstallReason;

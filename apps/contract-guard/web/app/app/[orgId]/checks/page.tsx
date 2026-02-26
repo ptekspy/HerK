@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SectionHeader } from '../../../components/section-header';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Check {
   id: string;
@@ -21,6 +22,7 @@ function badgeClass(conclusion: Check['conclusion']) {
 
 export default async function ChecksPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const checks = await apiGet<Check[]>(`/v1/orgs/${orgId}/checks`).catch(() => []);
 
   return (

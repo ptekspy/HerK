@@ -1,12 +1,15 @@
 export type PlanId = 'STARTER' | 'GROWTH' | 'ENTERPRISE';
 export type BillingCycle = 'MONTHLY' | 'YEARLY';
 export type RoadmapStatus = 'LIVE' | 'ROADMAP';
+export type PlanCtaMode = 'TRIAL' | 'CONTACT_SALES';
 
 export interface PlanPackage {
   id: PlanId;
   name: string;
   tagline: string;
+  audienceLabel: string;
   description: string;
+  ctaMode: PlanCtaMode;
   price: Record<BillingCycle, string>;
   highlights: string[];
 }
@@ -23,8 +26,10 @@ export const PLAN_PACKAGES: PlanPackage[] = [
   {
     id: 'STARTER',
     name: 'Starter',
-    tagline: 'Small teams shipping their first protected APIs',
-    description: 'Essential contract checks and policy control for teams with a focused API surface.',
+    tagline: 'For teams shipping their first protected APIs',
+    audienceLabel: 'Best for individual developers and small teams.',
+    description: 'Essential merge-time checks and policy controls for focused API surfaces.',
+    ctaMode: 'TRIAL',
     price: {
       MONTHLY: '$49/mo',
       YEARLY: '$490/yr',
@@ -38,8 +43,10 @@ export const PLAN_PACKAGES: PlanPackage[] = [
   {
     id: 'GROWTH',
     name: 'Growth',
-    tagline: 'Scaling organizations with multiple API domains',
-    description: 'Expanded service coverage, collaboration controls, and richer operational workflows.',
+    tagline: 'For scaling API platforms and shared service ownership',
+    audienceLabel: 'Best for scaling teams managing 3-15 services.',
+    description: 'Expanded coverage, collaboration controls, and stronger release governance.',
+    ctaMode: 'TRIAL',
     price: {
       MONTHLY: '$199/mo',
       YEARLY: '$1,990/yr',
@@ -53,8 +60,10 @@ export const PLAN_PACKAGES: PlanPackage[] = [
   {
     id: 'ENTERPRISE',
     name: 'Enterprise',
-    tagline: 'Large API platforms and compliance-heavy environments',
-    description: 'Unlimited service scale with roadmap features designed for strict governance.',
+    tagline: 'For large API organizations with compliance and SLA needs',
+    audienceLabel: 'Best for 15+ services with procurement and SLA requirements.',
+    description: 'Unlimited scale, governance roadmap controls, and enterprise onboarding support.',
+    ctaMode: 'CONTACT_SALES',
     price: {
       MONTHLY: 'Contact sales',
       YEARLY: 'Contact sales',
@@ -62,7 +71,7 @@ export const PLAN_PACKAGES: PlanPackage[] = [
     highlights: [
       'Unlimited monitored services',
       'Priority onboarding and architecture guidance',
-      'Enterprise security and governance roadmap',
+      'Enterprise support and governance roadmap',
     ],
   },
 ];
@@ -74,8 +83,8 @@ export const PRICING_FEATURE_ROWS: PricingFeatureRow[] = [
     detail: 'Maximum number of active services protected by API Contract Guard checks.',
     status: 'LIVE',
     values: {
-      STARTER: '3 services',
-      GROWTH: '15 services',
+      STARTER: '3',
+      GROWTH: '15',
       ENTERPRISE: 'Unlimited',
     },
   },
@@ -85,81 +94,81 @@ export const PRICING_FEATURE_ROWS: PricingFeatureRow[] = [
     detail: 'Install once and sync repositories into API Contract Guard.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'pr_checks',
     feature: 'Pull request contract checks',
-    detail: 'Automated OpenAPI diff checks on opened/synchronized PRs.',
+    detail: 'Automated OpenAPI diff checks on opened and synchronized pull requests.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'policy_controls',
     feature: 'Policy controls',
-    detail: 'Org defaults and service-level policy overrides.',
+    detail: 'Org defaults with service-level policy overrides.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'waivers',
-    feature: 'Waivers and exception windows',
-    detail: 'Time-bound waiver workflows for controlled releases.',
+    feature: 'Waivers and expirations',
+    detail: 'Time-bound exception workflows with rationale tracking.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'in_app_notifications',
     feature: 'In-app notifications',
-    detail: 'Activity feed for contract warnings, failures, and errors.',
+    detail: 'Activity feed for failures, warnings, and operational updates.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'email_alerts',
     feature: 'PR failure email alerts',
-    detail: 'Email notifications for failing/error check outcomes with org-level toggle.',
+    detail: 'Email notifications for failing or error check outcomes with org-level toggle.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'team_collaboration',
     feature: 'Team collaboration',
-    detail: 'Owner/Admin/Member/Viewer role-based access management.',
+    detail: 'Role-based access with Owner/Admin/Member/Viewer controls.',
     status: 'LIVE',
     values: {
-      STARTER: 'Included',
-      GROWTH: 'Included',
-      ENTERPRISE: 'Included',
+      STARTER: '✓',
+      GROWTH: '✓',
+      ENTERPRISE: '✓',
     },
   },
   {
     key: 'billing_cadence',
     feature: 'Billing cadence',
-    detail: 'Monthly and yearly billing options with yearly savings.',
+    detail: 'Monthly and yearly options with yearly savings.',
     status: 'LIVE',
     values: {
       STARTER: 'Monthly + Yearly',
@@ -170,34 +179,35 @@ export const PRICING_FEATURE_ROWS: PricingFeatureRow[] = [
   {
     key: 'sso_saml',
     feature: 'SSO / SAML',
-    detail: 'Centralized identity integration and access lifecycle controls.',
+    detail: 'Centralized identity integration and lifecycle controls.',
     status: 'ROADMAP',
     values: {
       STARTER: 'Roadmap',
       GROWTH: 'Roadmap',
-      ENTERPRISE: 'Planned priority',
+      ENTERPRISE: 'Priority roadmap',
     },
   },
   {
     key: 'audit_exports',
     feature: 'Advanced audit exports',
-    detail: 'Structured exports for waivers, policies, and check history.',
+    detail: 'Structured exports for policies, waivers, and check histories.',
     status: 'ROADMAP',
     values: {
       STARTER: 'Roadmap',
       GROWTH: 'Roadmap',
-      ENTERPRISE: 'Planned priority',
+      ENTERPRISE: 'Priority roadmap',
     },
   },
   {
     key: 'sla_support',
     feature: 'SLA and support tiers',
-    detail: 'Tiered support response commitments and escalation channels.',
+    detail: 'Tiered response commitments and escalation channels.',
     status: 'ROADMAP',
     values: {
       STARTER: 'Roadmap',
       GROWTH: 'Roadmap',
-      ENTERPRISE: 'Planned priority',
+      ENTERPRISE: 'Priority roadmap',
     },
   },
 ];
+

@@ -37,6 +37,7 @@ export interface FooterColumn {
 export const SITE_BRAND_NAME = 'API Contract Guard';
 export const LEGAL_LAST_UPDATED = 'February 26, 2026';
 export const DEFAULT_SUPPORT_EMAIL = 'support@apicontractguard.com';
+export const DEFAULT_SALES_EMAIL = 'sales@apicontractguard.com';
 
 export const MARKETING_NAV_LINKS: SiteLink[] = [
   { label: 'Features', href: '/features' },
@@ -76,6 +77,10 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 
 export function getSupportEmail() {
   return process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || DEFAULT_SUPPORT_EMAIL;
+}
+
+export function getSalesEmail() {
+  return process.env.NEXT_PUBLIC_SALES_EMAIL?.trim() || getSupportEmail() || DEFAULT_SALES_EMAIL;
 }
 
 export function getStatusPageUrl() {

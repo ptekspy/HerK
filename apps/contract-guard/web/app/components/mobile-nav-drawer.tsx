@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 
 import type { SiteLink } from '../content/site';
 
+import { BrandLogo } from './brand-logo';
 import { LogoutButton } from './logout-button';
 import { SiteNav } from './site-nav';
 
@@ -53,7 +54,10 @@ export function MobileNavDrawer({
 
       <aside className={`mobile-nav-panel ${open ? 'is-open' : ''}`} id={panelId}>
         <div className="mobile-nav-header">
-          <strong>Navigation</strong>
+          <div className="mobile-nav-brand">
+            <BrandLogo variant="square" />
+            <strong>Navigation</strong>
+          </div>
           <button
             ref={closeButtonRef}
             type="button"

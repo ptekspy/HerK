@@ -3,6 +3,7 @@ import { TeamInviteForm } from '../../../components/team-invite-form';
 import { TeamMemberActions } from '../../../components/team-member-actions';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Member {
   id: string;
@@ -15,6 +16,7 @@ interface Member {
 
 export default async function TeamPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const members = await apiGet<Member[]>(`/v1/orgs/${orgId}/members`).catch(() => []);
 
   return (

@@ -1,6 +1,7 @@
 import { SectionHeader } from '../../../../components/section-header';
 
 import { apiGet } from '../../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../../lib/subscription';
 
 interface Issue {
   id: string;
@@ -25,6 +26,7 @@ export default async function CheckDetailPage({
   params: Promise<{ orgId: string; checkId: string }>;
 }) {
   const { orgId, checkId } = await params;
+  await requireActiveSubscription(orgId);
 
   const check = await apiGet<CheckDetail>(`/v1/orgs/${orgId}/checks/${checkId}`).catch(() => ({
     id: checkId,

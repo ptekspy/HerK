@@ -2,6 +2,7 @@ import { SectionHeader } from '../../../components/section-header';
 import { CreateServiceForm } from '../../../components/create-service-form';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Service {
   id: string;
@@ -18,6 +19,7 @@ interface RepositoryOption {
 
 export default async function ServicesPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
   const services = await apiGet<Service[]>(`/v1/orgs/${orgId}/services`).catch(() => []);
   const repositories = await apiGet<RepositoryOption[]>(`/v1/orgs/${orgId}/repos`).catch(() => []);
 
@@ -52,7 +54,12 @@ export default async function ServicesPage({ params }: { params: Promise<{ orgId
 
         <article className="card card-grid-6" id="create-service">
           <h3>Add service</h3>
-          <CreateServiceForm orgId={orgId} repositories={repositories} />
+          <CreateServiceForm
+            orgId={orgId}
+            repositories={repositories}
+            isSubscriptionActive
+            billingHref={`/app/${orgId}/billing`}
+          />
         </article>
       </section>
     </>

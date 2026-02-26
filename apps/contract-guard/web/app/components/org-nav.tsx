@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { BrandLogo } from './brand-logo';
+
 const navItems = [
   { href: 'dashboard', label: 'Dashboard' },
   { href: 'repos', label: 'Repositories' },
@@ -20,7 +22,10 @@ export function OrgNav({ orgId }: { orgId: string }) {
 
   return (
     <nav className="side-nav">
-      <div className="brand">API Contract Guard</div>
+      <div className="brand brand-with-logo">
+        <BrandLogo variant="square" />
+        <span>API Contract Guard</span>
+      </div>
       {navItems.map((item) => {
         const href = `/app/${orgId}/${item.href}`;
         const active = pathname === href;

@@ -8,6 +8,7 @@ import { DashboardSetupWizard } from '../../../components/dashboard-setup-wizard
 import type { DashboardSummary } from '../../../components/dashboard-types';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface OrgSummary {
   id: string;
@@ -73,6 +74,7 @@ export default async function DashboardPage({
   params: Promise<{ orgId: string }>;
 }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
 
   let summary: DashboardSummary | null = null;
 

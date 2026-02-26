@@ -2,6 +2,7 @@ import { SectionHeader } from '../../../components/section-header';
 import { PolicyEditor } from '../../../components/policy-editor';
 
 import { apiGet } from '../../../../lib/api-server';
+import { requireActiveSubscription } from '../../../../lib/subscription';
 
 interface Policy {
   id: string;
@@ -11,6 +12,7 @@ interface Policy {
 
 export default async function PoliciesPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId } = await params;
+  await requireActiveSubscription(orgId);
 
   const policy = await apiGet<Policy>(`/v1/orgs/${orgId}/policies/default`).catch(() => ({
     id: 'default',

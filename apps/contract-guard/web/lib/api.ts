@@ -20,6 +20,43 @@ function buildApiUrl(path: string): string {
   return `${base}${path}`;
 }
 
+async function buildApiError(response: Response, method: string, path: string): Promise<Error> {
+  const fallback = `${method} ${path} failed with status ${response.status}`;
+
+  try {
+    const payload = (await response.clone().json()) as
+      | { message?: string | string[]; error?: string }
+      | null;
+
+    if (payload) {
+      if (Array.isArray(payload.message) && payload.message.length > 0) {
+        return new Error(payload.message.join('; '));
+      }
+
+      if (typeof payload.message === 'string' && payload.message.trim().length > 0) {
+        return new Error(payload.message);
+      }
+
+      if (typeof payload.error === 'string' && payload.error.trim().length > 0) {
+        return new Error(payload.error);
+      }
+    }
+  } catch {
+    // fall through to plain text fallback
+  }
+
+  try {
+    const text = (await response.text()).trim();
+    if (text.length > 0) {
+      return new Error(text);
+    }
+  } catch {
+    // ignore parse failures
+  }
+
+  return new Error(fallback);
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(buildApiUrl(path), {
     headers: DEMO_HEADERS,
@@ -28,7 +65,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`GET ${path} failed with status ${response.status}`);
+    throw await buildApiError(response, 'GET', path);
   }
 
   return response.json() as Promise<T>;
@@ -46,7 +83,7 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`POST ${path} failed with status ${response.status}`);
+    throw await buildApiError(response, 'POST', path);
   }
 
   return response.json() as Promise<T>;
@@ -64,7 +101,7 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`PATCH ${path} failed with status ${response.status}`);
+    throw await buildApiError(response, 'PATCH', path);
   }
 
   return response.json() as Promise<T>;
@@ -82,7 +119,7 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`PUT ${path} failed with status ${response.status}`);
+    throw await buildApiError(response, 'PUT', path);
   }
 
   return response.json() as Promise<T>;
@@ -96,7 +133,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`DELETE ${path} failed with status ${response.status}`);
+    throw await buildApiError(response, 'DELETE', path);
   }
 
   return response.json() as Promise<T>;
