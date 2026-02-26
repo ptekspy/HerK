@@ -11,10 +11,11 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
-    "@herk/tailwind-config": "workspace:*",
     "@herk/lib": "workspace:*",
+    "@herk/tailwind-config": "workspace:*",
     "@herk/ui": "workspace:*",
     "@herk/utils": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/vite": "^4.2.1",
     "next": "16.1.6",
     "postcss": "^8.5.6",
